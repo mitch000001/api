@@ -1,3 +1,4 @@
 %syntax-version=1.0.0-b2
 %project=umsatz
 
+01-create-fiscalPeriods-table 2014-02-01T21:07:36Z Raphael Randschau <nicolai86@kepler-22b.local># create fiscal_periods table
