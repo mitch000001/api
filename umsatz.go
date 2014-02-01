@@ -42,7 +42,7 @@ func SetupHood() *hood.Hood {
 		if err != nil {
 			log.Fatal(err)
 		}
-		revDsn = "user=" + user.Username + " dbname=revisioneer sslmode=disable"
+		revDsn = "user=" + user.Username + " dbname=umsatz sslmode=disable"
 	}
 
 	var err error
