@@ -3,7 +3,7 @@ package main
 import (
 	// 	"errors"
 	// 	"encoding/base64"
-	// 	"encoding/json"
+	"encoding/json"
 	// 	"fmt"
 	"database/sql"
 	"github.com/eaigner/hood"
@@ -20,17 +20,6 @@ import (
 	// 	"math"
 	"time"
 )
-
-type FiscalPeriod struct {
-  Id        hood.Id   `json:"-"`
-  Year      int 	    `json:"year"`
-  CreatedAt time.Time `json:"created_at"`
-  UpdatedAt time.Time `json:"updated_at"`
-}
-
-func FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Request) {
-	io.WriteString(w, "[]")
-}
 
 var db *sql.DB
 var hd *hood.Hood
@@ -61,6 +50,36 @@ func init() {
 	SetupHood()
 }
 
+type FiscalPeriod struct {
+  Id        hood.Id   `json:"-"`
+  Year      int 	    `json:"year"`
+  CreatedAt time.Time `json:"created_at"`
+  UpdatedAt time.Time `json:"updated_at"`
+}
+
+func FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Request) {
+	var fiscalPeriods []FiscalPeriod
+	err := hd.OrderBy("year").Asc().Find(&fiscalPeriods)
+
+	if err != nil {
+		log.Fatal("unable to load fiscalPeriods", err)
+	}
+
+	b, err := json.Marshal(fiscalPeriods)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if err == nil {
+		if string(b) == "null" {
+			io.WriteString(w, "[]")
+		} else {
+			io.WriteString(w, string(b))
+		}
+
+	} else {
+		io.WriteString(w, "[]")
+	}
+}
+
+
 func main() {
 	var port string = os.Getenv("PORT")
 	if port == "" {
@@ -74,8 +93,7 @@ func main() {
 	log.Printf("listening on %v", l.Addr())
 
 	r := mux.NewRouter()
-	s := r.PathPrefix("/timeframes").Subrouter()
-	s.HandleFunc("/fiscalPeriods", FiscalPeriodIndexHandler).
+	r.HandleFunc("/fiscalPeriods", FiscalPeriodIndexHandler).
 		Methods("GET")
 
 	http.Handle("/", r)
