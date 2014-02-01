@@ -10,11 +10,7 @@ import (
 	"os"
 )
 
-func TimeframesIndexHandler(w http.ResponseWriter, req *http.Request) {
-	io.WriteString(w, "[]")
-}
-
-func TimeframesCreationHandler(w http.ResponseWriter, req *http.Request) {
+func FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "[]")
 }
 
@@ -32,10 +28,8 @@ func main() {
 
 	r := mux.NewRouter()
 	s := r.PathPrefix("/timeframes").Subrouter()
-	s.HandleFunc("/", TimeframesIndexHandler).
+	s.HandleFunc("/fiscalPeriods", FiscalPeriodIndexHandler).
 		Methods("GET")
-	s.HandleFunc("/", TimeframesCreationHandler).
-		Methods("POST")
 
 	http.Handle("/", r)
 	http.Serve(l, r)
