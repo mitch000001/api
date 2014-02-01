@@ -26,8 +26,7 @@ REV_DSN="user=$(whoami) dbname=umsatz_test sslmode=disable" gom test
 createdb umsatz
 sqitch deploy
 
-gom build
-REV_DSN="user=$(whoami) dbname=umsatz sslmode=disable" ./umsatz
+REV_DSN="user=$(whoami) dbname=umsatz sslmode=disable" gom run umsatz.go
 ```
 
 [1]:https://github.com/theory/sqitch
