@@ -110,15 +110,17 @@ func FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *http.Request,
 		position.Description).Run()
 
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	b, err := json.Marshal(fiscalPeriod)
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err == nil {
-		io.WriteString(w, string(b))
+		log.Printf("FATAL: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, `{"errors": "$1"}`, err)
 	} else {
-		io.WriteString(w, "{}")
+		b, err := json.Marshal(fiscalPeriod)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		if err == nil {
+			io.WriteString(w, string(b))
+		} else {
+			io.WriteString(w, "{}")
+		}
 	}
 }
 

@@ -64,3 +64,28 @@ func TestFiscalPeriodsPositionCreation(t *testing.T) {
 		t.Fatalf("Non-expected status code%v:\n\tbody: %+v", "200", response.Code)
 	}
 }
+
+func TestFiscalPeriodsPositionCreationWithMissingPositionAttributes(t *testing.T) {
+  ClearDb()
+  jetDb.Query("INSERT INTO fiscal_periods (year) VALUES (2014)").Run()
+
+  request, _ := http.NewRequest("POST", "/fiscalPeriods/2014/positions", strings.NewReader(`
+      {
+        "category": "Freelance",
+        "account": "5900",
+        "invoiceDate": "2014-02-02T00:00:00Z",
+        "invoiceNumber": "20140201",
+        "totalAmount": 2099,
+        "currency": "EUR",
+        "tax": 700,
+        "description": "Kunde A Februar"
+      }`,
+  ))
+  response := httptest.NewRecorder()
+
+  FiscalPeriodCreatePositionHandler(response, request, map[string]string{"year": "2014"})
+
+  if response.Code != http.StatusBadRequest {
+    t.Fatalf("Non-expected status code%v:\n\tbody: %+v", "400", response.Code)
+  }
+}
