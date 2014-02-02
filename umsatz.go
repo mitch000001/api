@@ -1,8 +1,8 @@
 package main
 
 import (
-	// 	"errors"
-	// 	"encoding/base64"
+	//  "errors"
+	//  "encoding/base64"
 	_ "database/sql"
 	"encoding/json"
 	"fmt"
@@ -15,9 +15,9 @@ import (
 	"net/http"
 	"os"
 	"os/user"
-	// 	"io"
-	// 	"log"
-	// 	"math"
+	//  "io"
+	//  "log"
+	//  "math"
 	"syscall"
 	"time"
 )
@@ -59,25 +59,25 @@ type FiscalPeriod struct {
 }
 
 type Position struct {
-	Id 							int 				`json:"id"`
-	Category  			string 			`json:"category"`
-	Account   			string 			`json:"account"`
-	Type 						string 			`json:"type"`
-	InvoiceDate 		time.Time 	`json:"invoiceDate"`
-	InvoiceNumber 	string 			`json:"invoiceNumber"`
-	TotalAmount   	int 				`json:"totalAmount"`
-	Currency 				string 			`json:"currency"`
-	Tax							int    			`json:"tax"`
-	FiscalPeriodId  int 				`json:"fiscalPeriodId"`
-	Description     string 			`json:"description"`
-	CreatedAt  			time.Time   `json:"createdAt"`
-	UpdatedAt 			time.Time   `json:"updatedAt"`
+	Id             int       `json:"id"`
+	Category       string    `json:"category"`
+	Account        string    `json:"account"`
+	Type           string    `json:"type"`
+	InvoiceDate    time.Time `json:"invoiceDate"`
+	InvoiceNumber  string    `json:"invoiceNumber"`
+	TotalAmount    int       `json:"totalAmount"`
+	Currency       string    `json:"currency"`
+	Tax            int       `json:"tax"`
+	FiscalPeriodId int       `json:"fiscalPeriodId"`
+	Description    string    `json:"description"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
 }
 
 func FiscalPeriodDeletePositionHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
 	jetDb.Query(`DELETE FROM "positions"
-		INNER JOIN "fiscal_periods" ON "fiscal_periods".id = "positions.fiscal_period_id"
-		WHERE "fiscal_periods".year = $1 AND "positions".id = $2 LIMIT 1`, vars["year"], vars["id"]).Run()
+    INNER JOIN "fiscal_periods" ON "fiscal_periods".id = "positions.fiscal_period_id"
+    WHERE "fiscal_periods".year = $1 AND "positions".id = $2 LIMIT 1`, vars["year"], vars["id"]).Run()
 	io.WriteString(w, "")
 }
 
@@ -95,19 +95,19 @@ func FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *http.Request,
 	position.FiscalPeriodId = fiscalPeriod.Id
 
 	err := jetDb.Query(`INSERT INTO "positions"
-				(category, account, type, invoice_date, invoice_number, total_amount, currency, tax, fiscal_period_id, description)
-			VALUES
-				($1			 , $2			, $3	, $4					, $5						, $6					, $7			, $8 , $9							 , $10)`,
-			position.Category,
-			position.Account,
-			position.Type,
-			position.InvoiceDate,
-			position.InvoiceNumber,
-			position.TotalAmount,
-			position.Currency,
-			position.Tax,
-			position.FiscalPeriodId,
-			position.Description).Run()
+        (category, account, type, invoice_date, invoice_number, total_amount, currency, tax, fiscal_period_id, description)
+      VALUES
+        ($1      , $2     , $3  , $4          , $5            , $6          , $7      , $8 , $9              , $10)`,
+		position.Category,
+		position.Account,
+		position.Type,
+		position.InvoiceDate,
+		position.InvoiceNumber,
+		position.TotalAmount,
+		position.Currency,
+		position.Tax,
+		position.FiscalPeriodId,
+		position.Description).Run()
 
 	if err != nil {
 		log.Fatal(err)
@@ -151,9 +151,10 @@ func FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 type RequestHandlerWithVars func(http.ResponseWriter, *http.Request, map[string]string)
+
 func (requestHandler RequestHandlerWithVars) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-  vars := mux.Vars(req)
-  requestHandler(w, req, vars)
+	vars := mux.Vars(req)
+	requestHandler(w, req, vars)
 }
 
 func main() {
@@ -170,8 +171,8 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/fiscalPeriods", FiscalPeriodIndexHandler).Methods("GET")
-	r.Handle("/fiscalPeriods/{year}/positions",  RequestHandlerWithVars(FiscalPeriodCreatePositionHandler)).Methods("POST")
-	r.Handle("/fiscalPeriods/{year}/positions/{id}",  RequestHandlerWithVars(FiscalPeriodDeletePositionHandler)).Methods("DELETE")
+	r.Handle("/fiscalPeriods/{year}/positions", RequestHandlerWithVars(FiscalPeriodCreatePositionHandler)).Methods("POST")
+	r.Handle("/fiscalPeriods/{year}/positions/{id}", RequestHandlerWithVars(FiscalPeriodDeletePositionHandler)).Methods("DELETE")
 
 	http.Handle("/", r)
 	http.Serve(l, r)

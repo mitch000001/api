@@ -13,8 +13,8 @@ func init() {
 }
 
 func ClearDb() {
-  jetDb.Query("DELETE FROM positions").Run()
-  jetDb.Query("DELETE FROM fiscal_periods").Run()
+	jetDb.Query("DELETE FROM positions").Run()
+	jetDb.Query("DELETE FROM fiscal_periods").Run()
 }
 
 func TestFiscalPeriodsIndex(t *testing.T) {
@@ -40,10 +40,10 @@ func TestFiscalPeriodsIndex(t *testing.T) {
 }
 
 func TestFiscalPeriodsPositionCreation(t *testing.T) {
-  ClearDb()
-  jetDb.Query("INSERT INTO fiscal_periods (year) VALUES (2014)").Run()
+	ClearDb()
+	jetDb.Query("INSERT INTO fiscal_periods (year) VALUES (2014)").Run()
 
-  request, _ := http.NewRequest("POST", "/fiscalPeriods/2014/positions", strings.NewReader(`
+	request, _ := http.NewRequest("POST", "/fiscalPeriods/2014/positions", strings.NewReader(`
       {
         "category": "Freelance",
         "account": "5900",
@@ -55,12 +55,12 @@ func TestFiscalPeriodsPositionCreation(t *testing.T) {
         "tax": 700,
         "description": "Kunde A Februar"
       }`,
-    ))
-  response := httptest.NewRecorder()
+	))
+	response := httptest.NewRecorder()
 
-  FiscalPeriodCreatePositionHandler(response, request, map[string]string{"year": "2014"})
+	FiscalPeriodCreatePositionHandler(response, request, map[string]string{"year": "2014"})
 
-  if response.Code != http.StatusOK {
-    t.Fatalf("Non-expected status code%v:\n\tbody: %+v", "200", response.Code)
-  }
+	if response.Code != http.StatusOK {
+		t.Fatalf("Non-expected status code%v:\n\tbody: %+v", "200", response.Code)
+	}
 }
