@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"testing"
+  "testing"
+  // "io/ioutil"
+  "fmt"
 )
 
 func init() {
@@ -48,7 +50,7 @@ func TestFiscalPeriodsPositionCreation(t *testing.T) {
         "category": "Freelance",
         "account": "5900",
         "type": "income",
-        "invoiceDate": "2014-02-02T00:00:00Z",
+        "invoiceDate": "2014-02-02",
         "invoiceNumber": "20140201",
         "totalAmount": 2099,
         "currency": "EUR",
@@ -63,6 +65,29 @@ func TestFiscalPeriodsPositionCreation(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Fatalf("Non-expected status code%v:\n\tbody: %+v", "200", response.Code)
 	}
+
+  decoder := json.NewDecoder(response.Body)
+
+  var position Position
+  _ = decoder.Decode(&position)
+
+  // b, _ := ioutil.ReadAll(response.Body)
+  // fmt.Printf("'%#v'", string(b))
+  // fmt.Printf("%#v", position)
+
+  if len(position.Errors) != 0 {
+    t.Fatalf("payload should have been valid, got '%v'", position.Errors)
+  }
+
+  if position.Category != "Freelance" {
+    t.Fatalf("did not persist category correctly, expected 'Freelance', got %#v", position.Category)
+  }
+  if position.Account != "5900" {
+    t.Fatalf("did not persist account correctly, got %v", position.Account)
+  }
+  if position.PositionType != "income" {
+    t.Fatalf("did not persist type correctly, got %v", position.PositionType)
+  }
 }
 
 func TestFiscalPeriodsPositionCreationWithMissingPositionAttributes(t *testing.T) {
@@ -73,7 +98,7 @@ func TestFiscalPeriodsPositionCreationWithMissingPositionAttributes(t *testing.T
       {
         "category": "Freelance",
         "account": "5900",
-        "invoiceDate": "2014-02-02T00:00:00Z",
+        "invoiceDate": "2014-02-02",
         "invoiceNumber": "20140201",
         "totalAmount": 2099,
         "currency": "EUR",
@@ -87,5 +112,18 @@ func TestFiscalPeriodsPositionCreationWithMissingPositionAttributes(t *testing.T
 
   if response.Code != http.StatusBadRequest {
     t.Fatalf("Non-expected status code%v:\n\tbody: %+v", "400", response.Code)
+  }
+
+  decoder := json.NewDecoder(response.Body)
+
+  var position Position
+  _ = decoder.Decode(&position)
+
+  if len(position.Errors) == 0 {
+    t.Fatalf("payload should have been invalid")
+  }
+
+  if false {
+    fmt.Printf("%#v", position.Errors)
   }
 }

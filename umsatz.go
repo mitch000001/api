@@ -1,7 +1,7 @@
 package main
 
 import (
-	//  "errors"
+	 // "errors"
 	//  "encoding/base64"
 	_ "database/sql"
 	"encoding/json"
@@ -58,12 +58,25 @@ type FiscalPeriod struct {
 	Positions []Position `json:"positions"`
 }
 
+type ShortDate time.Time
+
+func (date ShortDate) MarshalJSON() ([]byte, error) {
+  return json.Marshal(time.Time(date).Format("2006-01-02"))
+}
+
+func (date *ShortDate) UnmarshalJSON(data []byte) (err error) {
+	strDate := string(data)
+	time, err := time.Parse("2006-01-02", strDate[1:len(strDate)-1])
+	*date = ShortDate(time)
+	return err
+}
+
 type Position struct {
 	Id             int       `json:"id"`
 	Category       string    `json:"category"`
 	Account        string    `json:"account"`
-	Type           string    `json:"type"`
-	InvoiceDate    time.Time `json:"invoiceDate"`
+	PositionType   string    `json:"type"`
+	InvoiceDate    ShortDate `json:"invoiceDate"`
 	InvoiceNumber  string    `json:"invoiceNumber"`
 	TotalAmount    int       `json:"totalAmount"`
 	Currency       string    `json:"currency"`
@@ -72,6 +85,11 @@ type Position struct {
 	Description    string    `json:"description"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
+	Errors       []string    `json:"errors,omitempty"`
+}
+
+func (p *Position) AddError(attr string, errorMsg string) () {
+	p.Errors = append(p.Errors, attr + ":" + errorMsg)
 }
 
 func FiscalPeriodDeletePositionHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
@@ -92,34 +110,54 @@ func FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *http.Request,
 		log.Fatal("decode error", err)
 	}
 
+	// fmt.Printf("%#v", position)
+
 	position.FiscalPeriodId = fiscalPeriod.Id
+	position.Errors = make([]string, 0)
 
-	err := jetDb.Query(`INSERT INTO "positions"
-        (category, account, type, invoice_date, invoice_number, total_amount, currency, tax, fiscal_period_id, description)
-      VALUES
-        ($1      , $2     , $3  , $4          , $5            , $6          , $7      , $8 , $9              , $10)`,
-		position.Category,
-		position.Account,
-		position.Type,
-		position.InvoiceDate,
-		position.InvoiceNumber,
-		position.TotalAmount,
-		position.Currency,
-		position.Tax,
-		position.FiscalPeriodId,
-		position.Description).Run()
+	if position.PositionType != "income" && position.PositionType != "expense" {
+		position.AddError("type", "must be either income or expense")
+	}
+	if position.Category == "" {
+		position.AddError("category", "must be present")
+	}
+	if position.Currency == "" {
+		position.AddError("currency", "must be present")
+	}
 
-	if err != nil {
-		log.Printf("FATAL: %v", err)
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, `{"errors": "$1"}`, err)
-	} else {
-		b, err := json.Marshal(fiscalPeriod)
+	if len(position.Errors) == 0 {
+		insertError := jetDb.Query(`INSERT INTO "positions"
+	        (category, account, type, invoice_date, invoice_number, total_amount, currency, tax, fiscal_period_id, description)
+	      VALUES
+	        ($1      , $2     , $3  , $4          , $5            , $6          , $7      , $8 , $9              , $10)`,
+			position.Category,
+			position.Account,
+			position.PositionType,
+			time.Time(position.InvoiceDate),
+			position.InvoiceNumber,
+			position.TotalAmount,
+			position.Currency,
+			position.Tax,
+			position.FiscalPeriodId,
+			position.Description).Run()
+
+		b, err := json.Marshal(position)
+		// fmt.Printf(string(b))
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if err == nil {
+		if err == nil && insertError == nil {
 			io.WriteString(w, string(b))
 		} else {
+			// fmt.Printf("%v, %v", err, insertError)
 			io.WriteString(w, "{}")
+		}
+	} else {
+		log.Printf("INFO: unable to insert position due to validation errors: %v", position.Errors)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusBadRequest)
+
+		if b, err := json.Marshal(position); err == nil {
+			io.WriteString(w, string(b))
+			// fmt.Fprint(w, string(b))
 		}
 	}
 }
