@@ -1,3 +1,3 @@
-gom 'github.com/eaigner/hood'
+gom 'github.com/eaigner/jet'
 gom 'github.com/gorilla/mux'
 gom 'github.com/lib/pq'

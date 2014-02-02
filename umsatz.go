@@ -3,10 +3,10 @@ package main
 import (
 	// 	"errors"
 	// 	"encoding/base64"
+	_ "database/sql"
 	"encoding/json"
-	// 	"fmt"
-	"database/sql"
-	"github.com/eaigner/hood"
+	"fmt"
+	"github.com/eaigner/jet"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"io"
@@ -18,13 +18,13 @@ import (
 	// 	"io"
 	// 	"log"
 	// 	"math"
+	"syscall"
 	"time"
 )
 
-var db *sql.DB
-var hd *hood.Hood
+var jetDb *jet.Db
 
-func SetupHood() *hood.Hood {
+func SetupDb() *jet.Db {
 	var revDsn = os.Getenv("REV_DSN")
 	if revDsn == "" {
 		user, err := user.Current()
@@ -34,32 +34,32 @@ func SetupHood() *hood.Hood {
 		revDsn = "user=" + user.Username + " dbname=umsatz sslmode=disable"
 	}
 
-	var err error
-	db, err = sql.Open("postgres", revDsn)
+	newDb, err := jet.Open("postgres", revDsn)
 	if err != nil {
 		log.Fatal("failed to connect to postgres", err)
 	}
-	db.SetMaxIdleConns(100)
+	newDb.SetMaxIdleConns(100)
 
-	newHd := hood.New(db, hood.NewPostgres())
-	newHd.Log = true
-	return newHd
+	return newDb
 }
 
 func init() {
-	hd = SetupHood()
+	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
+	log.SetPrefix(fmt.Sprintf("pid:%d ", syscall.Getpid()))
+
+	jetDb = SetupDb()
 }
 
-type FiscalPeriods struct {
-  Id        hood.Id   `json:"-"`
-  Year      int 	    `json:"year"`
-  CreatedAt time.Time `json:"created_at"`
-  UpdatedAt time.Time `json:"updated_at"`
+type FiscalPeriod struct {
+	Id        int       `json:"-"`
+	Year      int       `json:"year"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Request) {
-	var fiscalPeriods []FiscalPeriods
-	err := hd.OrderBy("year").Asc().Find(&fiscalPeriods)
+	var fiscalPeriods []FiscalPeriod
+	err := jetDb.Query(`SELECT * FROM "fiscal_periods" ORDER BY year ASC`).Rows(&fiscalPeriods)
 
 	if err != nil {
 		log.Fatal("unable to load fiscalPeriods", err)
@@ -73,12 +73,10 @@ func FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Request) {
 		} else {
 			io.WriteString(w, string(b))
 		}
-
 	} else {
 		io.WriteString(w, "[]")
 	}
 }
-
 
 func main() {
 	var port string = os.Getenv("PORT")
@@ -93,8 +91,7 @@ func main() {
 	log.Printf("listening on %v", l.Addr())
 
 	r := mux.NewRouter()
-	r.HandleFunc("/fiscalPeriods", FiscalPeriodIndexHandler).
-		Methods("GET")
+	r.HandleFunc("/fiscalPeriods", FiscalPeriodIndexHandler).Methods("GET")
 
 	http.Handle("/", r)
 	http.Serve(l, r)
