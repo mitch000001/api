@@ -2,3 +2,4 @@
 %project=umsatz
 
 01-create-fiscalPeriods-table 2014-02-01T21:07:36Z Raphael Randschau <nicolai86@kepler-22b.local># create fiscal_periods table
+02-create-positions-table [01-create-fiscalPeriods-table] 2014-02-02T11:12:57Z Raphael Randschau <nicolai86@kepler-22b.fritz.box># add positions for fiscalPeriods
