@@ -16,7 +16,7 @@ func init() {
 func TestFiscalPeriodsIndex(t *testing.T) {
   hd.Exec("DELETE FROM fiscal_periods")
 
-  var fiscalPeriod FiscalPeriod = FiscalPeriod{Year: 2014}
+  var fiscalPeriod FiscalPeriods = FiscalPeriods{Year: 2014}
   hd.Save(&fiscalPeriod)
 
   http.NewRequest("POST", "/fiscalPeriods", strings.NewReader(""))
@@ -28,7 +28,7 @@ func TestFiscalPeriodsIndex(t *testing.T) {
 
   decoder := json.NewDecoder(response.Body)
 
-  var fiscalPeriods []FiscalPeriod
+  var fiscalPeriods []FiscalPeriods
   _ = decoder.Decode(&fiscalPeriods)
   if len(fiscalPeriods) > 1 {
     t.Fatalf("Received wrong number of fiscalPeriods: %v", fiscalPeriods)

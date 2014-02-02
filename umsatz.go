@@ -47,10 +47,10 @@ func SetupHood() *hood.Hood {
 }
 
 func init() {
-	SetupHood()
+	hd = SetupHood()
 }
 
-type FiscalPeriod struct {
+type FiscalPeriods struct {
   Id        hood.Id   `json:"-"`
   Year      int 	    `json:"year"`
   CreatedAt time.Time `json:"created_at"`
@@ -58,7 +58,7 @@ type FiscalPeriod struct {
 }
 
 func FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Request) {
-	var fiscalPeriods []FiscalPeriod
+	var fiscalPeriods []FiscalPeriods
 	err := hd.OrderBy("year").Asc().Find(&fiscalPeriods)
 
 	if err != nil {
