@@ -88,6 +88,22 @@ type Position struct {
 	Errors       []string    `json:"errors,omitempty"`
 }
 
+func (p *Position) IsValid() (bool) {
+	p.Errors = make([]string, 0)
+
+	if p.PositionType != "income" && p.PositionType != "expense" {
+		p.AddError("type", "must be either income or expense")
+	}
+	if p.Category == "" {
+		p.AddError("category", "must be present")
+	}
+	if p.Currency == "" {
+		p.AddError("currency", "must be present")
+	}
+
+	return len(p.Errors) == 0
+}
+
 func (p *Position) AddError(attr string, errorMsg string) () {
 	p.Errors = append(p.Errors, attr + ":" + errorMsg)
 }
@@ -113,19 +129,9 @@ func FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *http.Request,
 	// fmt.Printf("%#v", position)
 
 	position.FiscalPeriodId = fiscalPeriod.Id
-	position.Errors = make([]string, 0)
 
-	if position.PositionType != "income" && position.PositionType != "expense" {
-		position.AddError("type", "must be either income or expense")
-	}
-	if position.Category == "" {
-		position.AddError("category", "must be present")
-	}
-	if position.Currency == "" {
-		position.AddError("currency", "must be present")
-	}
 
-	if len(position.Errors) == 0 {
+	if position.IsValid() {
 		insertError := jetDb.Query(`INSERT INTO "positions"
 	        (category, account, type, invoice_date, invoice_number, total_amount, currency, tax, fiscal_period_id, description)
 	      VALUES
