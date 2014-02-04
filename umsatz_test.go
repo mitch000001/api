@@ -1,6 +1,7 @@
 package main
 
 import (
+  "./models"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -34,7 +35,7 @@ func TestFiscalPeriodsIndex(t *testing.T) {
 
 	decoder := json.NewDecoder(response.Body)
 
-	var fiscalPeriods []FiscalPeriod
+	var fiscalPeriods []umsatz.FiscalPeriod
 	_ = decoder.Decode(&fiscalPeriods)
 	if len(fiscalPeriods) != 1 {
 		t.Fatalf("Received wrong number of fiscalPeriods: %v - %v", fiscalPeriods, response.Body)
@@ -68,7 +69,7 @@ func TestFiscalPeriodsPositionCreation(t *testing.T) {
 
   decoder := json.NewDecoder(response.Body)
 
-  var position Position
+  var position umsatz.Position
   _ = decoder.Decode(&position)
 
   // b, _ := ioutil.ReadAll(response.Body)
@@ -116,7 +117,7 @@ func TestFiscalPeriodsPositionCreationWithMissingPositionAttributes(t *testing.T
 
   decoder := json.NewDecoder(response.Body)
 
-  var position Position
+  var position umsatz.Position
   _ = decoder.Decode(&position)
 
   if len(position.Errors) == 0 {
