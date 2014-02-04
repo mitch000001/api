@@ -47,6 +47,17 @@ func (p *Position) IsValid() (bool) {
   if p.Currency == "" {
     p.AddError("currency", "must be present")
   }
+  if p.Account == "" {
+    p.AddError("account", "must be present")
+  }
+  if p.InvoiceDate == (ShortDate{}) {
+    p.AddError("invoice_date", "must be present")
+  }
+  if p.InvoiceNumber == "" {
+    p.AddError("invoice_number", "must be present")
+  }
+  // tax               int                  NOT NULL,
+  // fiscal_period_id  int                  NOT NULL,
 
   return len(p.Errors) == 0
 }
