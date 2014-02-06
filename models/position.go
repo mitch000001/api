@@ -53,8 +53,6 @@ func (p *Position) IsValid() (bool) {
   if p.InvoiceNumber == "" {
     p.AddError("invoice_number", "must be present")
   }
-  // tax               int                  NOT NULL,
-  // fiscal_period_id  int                  NOT NULL,
 
   return len(p.Errors) == 0
 }
