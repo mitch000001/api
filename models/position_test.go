@@ -12,10 +12,9 @@ func TestPositionValidations(t *testing.T) {
     t.Fatalf("expected empty position to be invalid")
   }
 
-  position.Category = "some category"
   position.Currency = "EUR"
   position.PositionType = "income"
-  position.Account = "some account"
+  position.Account = "5900"
   position.InvoiceDate = ShortDate(time.Now())
   position.InvoiceNumber = "20140101"
 

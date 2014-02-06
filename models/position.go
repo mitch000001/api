@@ -41,9 +41,6 @@ func (p *Position) IsValid() (bool) {
   if p.PositionType != "income" && p.PositionType != "expense" {
     p.AddError("type", "must be either income or expense")
   }
-  if p.Category == "" {
-    p.AddError("category", "must be present")
-  }
   if p.Currency == "" {
     p.AddError("currency", "must be present")
   }

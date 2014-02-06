@@ -8,7 +8,7 @@ CREATE TYPE position_currency AS ENUM ('EUR', 'USD', 'GBP');
 
 CREATE TABLE public.positions (
   id                SERIAL               PRIMARY KEY,
-  category          character(16)        NOT NULL,
+  category          character(16)        NOT NULL DEFAULT '',
   account           character(5)         NOT NULL,
   type              position_type        NOT NULL,
   invoice_date      TIMESTAMPTZ          NOT NULL,
