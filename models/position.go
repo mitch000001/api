@@ -1,4 +1,4 @@
-package umsatz
+package models
 
 import (
   "time"
@@ -19,7 +19,7 @@ func (date *ShortDate) UnmarshalJSON(data []byte) (err error) {
 }
 
 type Position struct {
-  Id             int       `json:"id"`
+  Id             int       `json:"id,omitempty"`
   Category       string    `json:"category"`
   Account        string    `json:"account"`
   PositionType   string    `json:"type"`

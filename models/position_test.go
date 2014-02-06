@@ -1,4 +1,4 @@
-package umsatz
+package models
 
 import (
   "time"

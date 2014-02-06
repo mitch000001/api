@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
   "testing"
+  "strconv"
   // "io/ioutil"
   "fmt"
 )
@@ -35,7 +36,7 @@ func TestFiscalPeriodsIndex(t *testing.T) {
 
 	decoder := json.NewDecoder(response.Body)
 
-	var fiscalPeriods []umsatz.FiscalPeriod
+	var fiscalPeriods []models.FiscalPeriod
 	_ = decoder.Decode(&fiscalPeriods)
 	if len(fiscalPeriods) != 1 {
 		t.Fatalf("Received wrong number of fiscalPeriods: %v - %v", fiscalPeriods, response.Body)
@@ -69,26 +70,43 @@ func TestFiscalPeriodsPositionCreation(t *testing.T) {
 
   decoder := json.NewDecoder(response.Body)
 
-  var position umsatz.Position
+  var position models.Position
   _ = decoder.Decode(&position)
-
-  // b, _ := ioutil.ReadAll(response.Body)
-  // fmt.Printf("'%#v'", string(b))
-  // fmt.Printf("%#v", position)
-
-  if len(position.Errors) != 0 {
-    t.Fatalf("payload should have been valid, got '%v'", position.Errors)
-  }
 
   if position.Category != "Freelance" {
     t.Fatalf("did not persist category correctly, expected 'Freelance', got %#v", position.Category)
   }
   if position.Account != "5900" {
-    t.Fatalf("did not persist account correctly, got %v", position.Account)
+    t.Fatalf("did not persist account correctly, got '%v'", position.Account)
   }
   if position.PositionType != "income" {
     t.Fatalf("did not persist type correctly, got %v", position.PositionType)
   }
+
+  updateRequest, _ := http.NewRequest("PUT", ("/fiscalPeriods/2014/positions/" + strconv.Itoa(position.Id)) , strings.NewReader(`
+      {
+        "type": "expense"
+      }`,
+  ))
+  updateResponse := httptest.NewRecorder()
+  FiscalPeriodUpdatePositionHandler(updateResponse, updateRequest, map[string]string{"year": "2014", "id": strconv.Itoa(position.Id)})
+
+  if response.Code != http.StatusOK {
+    t.Fatalf("Non-expected status code%v:\n\tbody: %+v", "200", response.Code)
+  }
+
+  decoder = json.NewDecoder(updateResponse.Body)
+  var updatedPosition models.Position
+  updateErr := decoder.Decode(&updatedPosition)
+
+  if updateErr != nil {
+    t.Fatalf("error decoding update '%v'", updateErr)
+  }
+
+  if updatedPosition.PositionType != "expense" {
+    t.Fatalf("position should have been expense now, got '%v'", updatedPosition.PositionType)
+  }
+
 }
 
 func TestFiscalPeriodsPositionCreationWithMissingPositionAttributes(t *testing.T) {
@@ -117,7 +135,7 @@ func TestFiscalPeriodsPositionCreationWithMissingPositionAttributes(t *testing.T
 
   decoder := json.NewDecoder(response.Body)
 
-  var position umsatz.Position
+  var position models.Position
   _ = decoder.Decode(&position)
 
   if len(position.Errors) == 0 {
