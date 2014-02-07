@@ -52,13 +52,25 @@ func init() {
 }
 
 func FiscalPeriodDeletePositionHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
-	jetDb.Query(`DELETE FROM "positions"
-    INNER JOIN "fiscal_periods" ON "fiscal_periods".id = "positions.fiscal_period_id"
-    WHERE "fiscal_periods".year = $1 AND "positions".id = $2 LIMIT 1`, vars["year"], vars["id"]).Run()
+	log.Println("DELETE /fiscalPeriods/%v/positions/%v", vars["year"], vars["id"])
+
+	err := jetDb.Query(`DELETE FROM positions
+    WHERE fiscal_period_id = (SELECT id FROM fiscal_periods WHERE year = $1 LIMIT 1) AND positions.id = $2`, vars["year"], vars["id"]).Run()
+
+	if err != nil {
+		log.Println("database error", err)
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, fmt.Sprintf(`{ "errors": "%v" }`, err))
+		return
+	}
+
 	io.WriteString(w, "")
 }
 
 func FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
+	log.Println("PUT /fiscalPeriods/%v/positions/%v", vars["year"], vars["id"])
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
 	var fiscalPeriods []models.FiscalPeriod
 	jetDb.Query(`SELECT * FROM "fiscal_periods" WHERE year = $1 LIMIT 1`, vars["year"]).Rows(&fiscalPeriods)
 	var fiscalPeriod models.FiscalPeriod = fiscalPeriods[0]
@@ -75,47 +87,44 @@ func FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *http.Request,
 		log.Fatal("decode error", err)
 	}
 
-
-	if position.IsValid() {
-		updateError := jetDb.Query(`UPDATE "positions" SET
-	        category = $1, account = $2, type = $3, invoice_date = $4, invoice_number = $5, total_amount = $6, currency = $7, tax = $8, fiscal_period_id = $9, description = $10
-	        WHERE ID = $11`,
-			position.Category,
-			position.Account,
-			position.PositionType,
-			time.Time(position.InvoiceDate),
-			position.InvoiceNumber,
-			position.TotalAmount,
-			position.Currency,
-			position.Tax,
-			position.FiscalPeriodId,
-			position.Description,
-			position.Id).Run()
-
-		b, err := json.Marshal(position)
-		// fmt.Printf(string(b))
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if err == nil && updateError == nil {
-			io.WriteString(w, string(b))
-		} else {
-			fmt.Printf("ERRRRRORRR %v, %v", err, updateError)
-			w.WriteHeader(http.StatusBadRequest)
-			io.WriteString(w, "{}")
-		}
-	} else {
-		log.Printf("INFO: unable to update position due to validation errors: %v", position.Errors)
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if !position.IsValid() {
+		log.Println("INFO: unable to update position due to validation errors: %v", position.Errors)
 		w.WriteHeader(http.StatusBadRequest)
 
 		if b, err := json.Marshal(position); err == nil {
 			io.WriteString(w, string(b))
-			// fmt.Fprint(w, string(b))
 		}
+	}
+
+	updateError := jetDb.Query(`UPDATE "positions" SET
+        category = $1, account = $2, type = $3, invoice_date = $4, invoice_number = $5, total_amount = $6, currency = $7, tax = $8, fiscal_period_id = $9, description = $10
+        WHERE ID = $11`,
+		position.Category,
+		position.Account,
+		position.PositionType,
+		time.Time(position.InvoiceDate),
+		position.InvoiceNumber,
+		position.TotalAmount,
+		position.Currency,
+		position.Tax,
+		position.FiscalPeriodId,
+		position.Description,
+		position.Id).Run()
+
+	b, err := json.Marshal(position)
+	// fmt.Println(string(b))
+	if err == nil && updateError == nil {
+		io.WriteString(w, string(b))
+	} else {
+		fmt.Println("ERRRRRORRR %v, %v", err, updateError)
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "{}")
 	}
 }
 
 func FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	log.Println("POST /fiscalPeriods/%v/positions", vars["year"])
 
 	var fiscalPeriods []models.FiscalPeriod
 	jetDb.Query(`SELECT * FROM "fiscal_periods" WHERE year = $1 LIMIT 1`, vars["year"]).Rows(&fiscalPeriods)
@@ -124,7 +133,7 @@ func FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *http.Request,
 	dec := json.NewDecoder(req.Body)
 	var position models.Position
 	if err := dec.Decode(&position); err != nil && err != io.EOF {
-		log.Printf("decode error", err)
+		log.Println("decode error", err)
 		w.WriteHeader(http.StatusBadRequest)
 		io.WriteString(w, fmt.Sprintf(`{ "errors": "%v" }`, err))
 		return
@@ -133,7 +142,7 @@ func FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *http.Request,
 	position.FiscalPeriodId = fiscalPeriod.Id
 
 	if !position.IsValid() {
-		log.Printf("INFO: unable to insert position due to validation errors: %v", position.Errors)
+		log.Println("INFO: unable to insert position due to validation errors: %v", position.Errors)
 		w.WriteHeader(http.StatusBadRequest)
 
 		if b, err := json.Marshal(position); err == nil {
@@ -158,18 +167,18 @@ func FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *http.Request,
 		position.Description).Rows(&position)
 
 	b, err := json.Marshal(position)
-	// fmt.Printf(string(b))
+	// fmt.Println(string(b))
 	if err == nil && insertError == nil {
 		io.WriteString(w, string(b))
 	} else {
-		fmt.Printf("INSERT ERRR %v, %v", err, insertError)
+		fmt.Println("INSERT ERRR %v, %v", err, insertError)
 		w.WriteHeader(http.StatusBadRequest)
 		io.WriteString(w, "{}")
 	}
 }
 
 func FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Request) {
-	log.Printf("GET /fiscalPeriods")
+	log.Println("GET /fiscalPeriods")
 	var fiscalPeriods []models.FiscalPeriod
 	err := jetDb.Query(`SELECT * FROM "fiscal_periods" ORDER BY year ASC`).Rows(&fiscalPeriods)
 
@@ -181,7 +190,7 @@ func FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Request) {
 		var positions []models.Position
 		err = jetDb.Query(`SELECT *, type as position_type FROM positions WHERE fiscal_period_id = $1`, fiscalPeriod.Id).Rows(&positions)
 		fiscalPeriods[i].Positions = positions
-		fmt.Printf("%v", positions)
+		fmt.Println("%v", positions)
 	}
 
 	b, err := json.Marshal(fiscalPeriods)
@@ -214,7 +223,7 @@ func main() {
 	if nil != err {
 		log.Fatalln(err)
 	}
-	log.Printf("listening on %v", l.Addr())
+	log.Println("listening on %v", l.Addr())
 
 	r := mux.NewRouter()
 	r.HandleFunc("/fiscalPeriods", FiscalPeriodIndexHandler).Methods("GET")

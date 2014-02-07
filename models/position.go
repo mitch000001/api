@@ -25,7 +25,7 @@ type Position struct {
   PositionType   string    `json:"type"`
   InvoiceDate    ShortDate `json:"invoiceDate"`
   InvoiceNumber  string    `json:"invoiceNumber"`
-  TotalAmount    int       `json:"totalAmount"`
+  TotalAmount    int       `json:"totalAmountCents"`
   Currency       string    `json:"currency"`
   Tax            int       `json:"tax"`
   FiscalPeriodId int       `json:"fiscalPeriodId"`

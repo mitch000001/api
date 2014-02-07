@@ -45,7 +45,7 @@ func TestPositionUnmarshal(t *testing.T) {
     "type":"expense",
     "invoiceDate":"2014-01-01",
     "invoiceNumber":"20140101",
-    "totalAmount":42.55,
+    "totalAmountCents":4255,
     "tax":7,
     "description":"",
     "currency":"EUR"
