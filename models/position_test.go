@@ -3,6 +3,9 @@ package models
 import (
   "time"
   "testing"
+  "strings"
+  "encoding/json"
+  "io"
 )
 
 func TestPositionValidations(t *testing.T) {
@@ -28,7 +31,29 @@ func TestPositionValidations(t *testing.T) {
     t.Fatalf("expected empty position to be invalid")
   }
   position.InvoiceNumber = "20140101"
+
   if !position.IsValid() {
     t.Fatalf("expect position to be valid")
+  }
+}
+
+func TestPositionUnmarshal(t *testing.T) {
+  payload := `{
+    "fiscalPeriodId": null,
+    "category": "Some Category",
+    "account": "5900",
+    "type":"expense",
+    "invoiceDate":"2014-01-01",
+    "invoiceNumber":"20140101",
+    "totalAmount":42.55,
+    "tax":7,
+    "description":"",
+    "currency":"EUR"
+  }`
+
+  decoder := json.NewDecoder(strings.NewReader(payload))
+  var position Position
+  if err := decoder.Decode(&position); err != nil && err != io.EOF {
+    t.Fatalf("error decoding JSON", err)
   }
 }

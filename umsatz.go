@@ -115,6 +115,8 @@ func FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *http.Request,
 }
 
 func FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
 	var fiscalPeriods []models.FiscalPeriod
 	jetDb.Query(`SELECT * FROM "fiscal_periods" WHERE year = $1 LIMIT 1`, vars["year"]).Rows(&fiscalPeriods)
 	var fiscalPeriod models.FiscalPeriod = fiscalPeriods[0]
@@ -122,45 +124,47 @@ func FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *http.Request,
 	dec := json.NewDecoder(req.Body)
 	var position models.Position
 	if err := dec.Decode(&position); err != nil && err != io.EOF {
-		log.Fatal("decode error", err)
+		log.Printf("decode error", err)
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, fmt.Sprintf(`{ "errors": "%v" }`, err))
+		return
 	}
 
 	position.FiscalPeriodId = fiscalPeriod.Id
 
-	if position.IsValid() {
-		insertError := jetDb.Query(`INSERT INTO "positions"
-	        (category, account, type, invoice_date, invoice_number, total_amount, currency, tax, fiscal_period_id, description)
-	      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-			position.Category,
-			position.Account,
-			position.PositionType,
-			time.Time(position.InvoiceDate),
-			position.InvoiceNumber,
-			position.TotalAmount,
-			position.Currency,
-			position.Tax,
-			position.FiscalPeriodId,
-			position.Description).Rows(&position)
-
-		b, err := json.Marshal(position)
-		// fmt.Printf(string(b))
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if err == nil && insertError == nil {
-			io.WriteString(w, string(b))
-		} else {
-			fmt.Printf("INSERT ERRR %v, %v", err, insertError)
-			w.WriteHeader(http.StatusBadRequest)
-			io.WriteString(w, "{}")
-		}
-	} else {
+	if !position.IsValid() {
 		log.Printf("INFO: unable to insert position due to validation errors: %v", position.Errors)
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusBadRequest)
 
 		if b, err := json.Marshal(position); err == nil {
 			io.WriteString(w, string(b))
 			// fmt.Fprint(w, string(b))
 		}
+		return
+	}
+
+	insertError := jetDb.Query(`INSERT INTO "positions"
+        (category, account, type, invoice_date, invoice_number, total_amount, currency, tax, fiscal_period_id, description)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+		position.Category,
+		position.Account,
+		position.PositionType,
+		time.Time(position.InvoiceDate),
+		position.InvoiceNumber,
+		position.TotalAmount,
+		position.Currency,
+		position.Tax,
+		position.FiscalPeriodId,
+		position.Description).Rows(&position)
+
+	b, err := json.Marshal(position)
+	// fmt.Printf(string(b))
+	if err == nil && insertError == nil {
+		io.WriteString(w, string(b))
+	} else {
+		fmt.Printf("INSERT ERRR %v, %v", err, insertError)
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "{}")
 	}
 }
 
@@ -175,8 +179,9 @@ func FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Request) {
 
 	for i, fiscalPeriod := range fiscalPeriods {
 		var positions []models.Position
-		err = jetDb.Query(`SELECT * FROM positions WHERE fiscal_period_id = $1`, fiscalPeriod.Id).Rows(&positions)
+		err = jetDb.Query(`SELECT *, type as position_type FROM positions WHERE fiscal_period_id = $1`, fiscalPeriod.Id).Rows(&positions)
 		fiscalPeriods[i].Positions = positions
+		fmt.Printf("%v", positions)
 	}
 
 	b, err := json.Marshal(fiscalPeriods)
