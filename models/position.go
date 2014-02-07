@@ -3,6 +3,10 @@ package models
 import (
   "time"
   "encoding/json"
+  "os"
+  "fmt"
+  "io/ioutil"
+  "encoding/base64"
 )
 
 type ShortDate time.Time
@@ -19,20 +23,23 @@ func (date *ShortDate) UnmarshalJSON(data []byte) (err error) {
 }
 
 type Position struct {
-  Id             int       `json:"id,omitempty"`
-  Category       string    `json:"category"`
-  Account        string    `json:"account"`
-  PositionType   string    `json:"type"`
-  InvoiceDate    ShortDate `json:"invoiceDate"`
-  InvoiceNumber  string    `json:"invoiceNumber"`
-  TotalAmount    int       `json:"totalAmountCents"`
-  Currency       string    `json:"currency"`
-  Tax            int       `json:"tax"`
-  FiscalPeriodId int       `json:"fiscalPeriodId"`
-  Description    string    `json:"description"`
-  CreatedAt      time.Time `json:"createdAt"`
-  UpdatedAt      time.Time `json:"updatedAt"`
-  Errors       []string    `json:"errors,omitempty"`
+  Id             int            `json:"id,omitempty"`
+  Category       string         `json:"category"`
+  Account        string         `json:"account"`
+  PositionType   string         `json:"type"`
+  InvoiceDate    ShortDate      `json:"invoiceDate"`
+  InvoiceNumber  string         `json:"invoiceNumber"`
+  TotalAmountCents int          `json:"totalAmountCents"`
+  Currency       string         `json:"currency"`
+  Tax            int            `json:"tax"`
+  FiscalPeriodId int            `json:"fiscalPeriodId"`
+  Description    string         `json:"description"`
+  CreatedAt      time.Time      `json:"createdAt"`
+  UpdatedAt      time.Time      `json:"updatedAt"`
+  EncodedFileExtension string   `json:"encodedFileExtension,omitempty"`
+  EncodedAttachment string      `json:"encodedAttachment,omitempty"`
+  AttachmentPath string         `json:"attachmentPath"`
+  Errors       []string         `json:"errors,omitempty"`
 }
 
 func (p *Position) IsValid() (bool) {
@@ -59,4 +66,26 @@ func (p *Position) IsValid() (bool) {
 
 func (p *Position) AddError(attr string, errorMsg string) () {
   p.Errors = append(p.Errors, attr + ":" + errorMsg)
+}
+
+func (p *Position) StoreAttachment(uploadDirectory string) (error) {
+  if p.EncodedAttachment == "" || p.EncodedFileExtension == "" {
+    return nil
+  }
+
+  data, err := base64.StdEncoding.DecodeString(p.EncodedAttachment)
+  if err != nil {
+    return err
+  }
+
+  if err := os.MkdirAll("./" + uploadDirectory + "/", 0744); err != nil {
+    return err
+  }
+  filePath := fmt.Sprintf("./%v/%d.%v", uploadDirectory, p.Id, p.EncodedFileExtension)
+
+  if err := ioutil.WriteFile(filePath, data, 0744); err != nil {
+    return err
+  }
+  p.AttachmentPath = filePath
+  return nil
 }

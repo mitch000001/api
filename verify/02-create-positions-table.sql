@@ -2,7 +2,7 @@
 
 BEGIN;
 
-SELECT id, total_amount, currency
+SELECT id, total_amount_cents, currency
   FROM public.positions
   WHERE FALSE;
 

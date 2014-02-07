@@ -2,7 +2,6 @@ package main
 
 import (
 	 // "errors"
-	//  "encoding/base64"
 	_ "database/sql"
 	"encoding/json"
 	"fmt"
@@ -16,7 +15,6 @@ import (
 	"net/http"
 	"os"
 	"os/user"
-	//  "io"
 	//  "log"
 	//  "math"
 	"syscall"
@@ -54,15 +52,26 @@ func init() {
 func FiscalPeriodDeletePositionHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
 	log.Println("DELETE /fiscalPeriods/%v/positions/%v", vars["year"], vars["id"])
 
-	err := jetDb.Query(`DELETE FROM positions
-    WHERE fiscal_period_id = (SELECT id FROM fiscal_periods WHERE year = $1 LIMIT 1) AND positions.id = $2`, vars["year"], vars["id"]).Run()
+	var fiscalPeriods []models.FiscalPeriod
+	jetDb.Query(`SELECT * FROM "fiscal_periods" WHERE year = $1 LIMIT 1`, vars["year"]).Rows(&fiscalPeriods)
+	var fiscalPeriod models.FiscalPeriod = fiscalPeriods[0]
 
-	if err != nil {
+	var positions []models.Position
+	if err := jetDb.Query(`SELECT * FROM positions WHERE fiscal_period_id = $1 AND id = $2`, fiscalPeriod.Id, vars["id"]).Rows(&positions); err != nil {
+		log.Println("database error", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var position models.Position = positions[0]
+
+	if err := jetDb.Query(`DELETE FROM positions
+    WHERE fiscal_period_id = (SELECT id FROM fiscal_periods WHERE year = $1 LIMIT 1) AND positions.id = $2`, vars["year"], vars["id"]).Run(); err != nil {
 		log.Println("database error", err)
 		w.WriteHeader(http.StatusBadRequest)
 		io.WriteString(w, fmt.Sprintf(`{ "errors": "%v" }`, err))
 		return
 	}
+	os.Remove( position.AttachmentPath )
 
 	io.WriteString(w, "")
 }
@@ -96,19 +105,34 @@ func FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *http.Request,
 		}
 	}
 
+	if err := position.StoreAttachment(fmt.Sprintf("uploads/%v", vars["year"])); err != nil {
+		log.Println("INFO: unable to store attachment: %v", err)
+	}
+
 	updateError := jetDb.Query(`UPDATE "positions" SET
-        category = $1, account = $2, type = $3, invoice_date = $4, invoice_number = $5, total_amount = $6, currency = $7, tax = $8, fiscal_period_id = $9, description = $10
-        WHERE ID = $11`,
+        category = $1,
+        account = $2,
+        type = $3,
+        invoice_date = $4,
+        invoice_number = $5,
+        total_amount_cents = $6,
+        currency = $7,
+        tax = $8,
+        fiscal_period_id = $9,
+        description = $10,
+        attachment_path = $11
+        WHERE ID = $12`,
 		position.Category,
 		position.Account,
 		position.PositionType,
 		time.Time(position.InvoiceDate),
 		position.InvoiceNumber,
-		position.TotalAmount,
+		position.TotalAmountCents,
 		position.Currency,
 		position.Tax,
 		position.FiscalPeriodId,
 		position.Description,
+		position.AttachmentPath,
 		position.Id).Run()
 
 	b, err := json.Marshal(position)
@@ -153,20 +177,31 @@ func FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *http.Request,
 	}
 
 	insertError := jetDb.Query(`INSERT INTO "positions"
-        (category, account, type, invoice_date, invoice_number, total_amount, currency, tax, fiscal_period_id, description)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+        (category, account, type, invoice_date, invoice_number, total_amount_cents, currency, tax, fiscal_period_id, description)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $11) RETURNING *`,
 		position.Category,
 		position.Account,
 		position.PositionType,
 		time.Time(position.InvoiceDate),
 		position.InvoiceNumber,
-		position.TotalAmount,
+		position.TotalAmountCents,
 		position.Currency,
 		position.Tax,
 		position.FiscalPeriodId,
 		position.Description).Rows(&position)
 
+	if storeErr := position.StoreAttachment(fmt.Sprintf("uploads/%v", vars["year"])); storeErr != nil {
+		log.Println("INFO: unable to store attachment: %v", storeErr)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if position.AttachmentPath != "" {
+		jetDb.Query(`UPDATE positions SET attachment_path = $1 WHERE id = $2`, position.AttachmentPath, position.Id).Run()
+	}
+
 	b, err := json.Marshal(position)
+
 	// fmt.Println(string(b))
 	if err == nil && insertError == nil {
 		io.WriteString(w, string(b))
