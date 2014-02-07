@@ -1,91 +1,91 @@
 package models
 
 import (
-  "time"
-  "encoding/json"
-  "os"
-  "fmt"
-  "io/ioutil"
-  "encoding/base64"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"time"
 )
 
 type ShortDate time.Time
 
 func (date ShortDate) MarshalJSON() ([]byte, error) {
-  return json.Marshal(time.Time(date).Format("2006-01-02"))
+	return json.Marshal(time.Time(date).Format("2006-01-02"))
 }
 
 func (date *ShortDate) UnmarshalJSON(data []byte) (err error) {
-  strDate := string(data)
-  time, err := time.Parse("2006-01-02", strDate[1:len(strDate)-1])
-  *date = ShortDate(time)
-  return err
+	strDate := string(data)
+	time, err := time.Parse("2006-01-02", strDate[1:len(strDate)-1])
+	*date = ShortDate(time)
+	return err
 }
 
 type Position struct {
-  Id             int            `json:"id,omitempty"`
-  Category       string         `json:"category"`
-  Account        string         `json:"account"`
-  PositionType   string         `json:"type"`
-  InvoiceDate    ShortDate      `json:"invoiceDate"`
-  InvoiceNumber  string         `json:"invoiceNumber"`
-  TotalAmountCents int          `json:"totalAmountCents"`
-  Currency       string         `json:"currency"`
-  Tax            int            `json:"tax"`
-  FiscalPeriodId int            `json:"fiscalPeriodId"`
-  Description    string         `json:"description"`
-  CreatedAt      time.Time      `json:"createdAt"`
-  UpdatedAt      time.Time      `json:"updatedAt"`
-  EncodedFileExtension string   `json:"encodedFileExtension,omitempty"`
-  EncodedAttachment string      `json:"encodedAttachment,omitempty"`
-  AttachmentPath string         `json:"attachmentPath"`
-  Errors       []string         `json:"errors,omitempty"`
+	Id                   int       `json:"id,omitempty"`
+	Category             string    `json:"category"`
+	Account              string    `json:"account"`
+	PositionType         string    `json:"type"`
+	InvoiceDate          ShortDate `json:"invoiceDate"`
+	InvoiceNumber        string    `json:"invoiceNumber"`
+	TotalAmountCents     int       `json:"totalAmountCents"`
+	Currency             string    `json:"currency"`
+	Tax                  int       `json:"tax"`
+	FiscalPeriodId       int       `json:"fiscalPeriodId"`
+	Description          string    `json:"description"`
+	CreatedAt            time.Time `json:"createdAt"`
+	UpdatedAt            time.Time `json:"updatedAt"`
+	EncodedFileExtension string    `json:"encodedFileExtension,omitempty"`
+	EncodedAttachment    string    `json:"encodedAttachment,omitempty"`
+	AttachmentPath       string    `json:"attachmentPath"`
+	Errors               []string  `json:"errors,omitempty"`
 }
 
-func (p *Position) IsValid() (bool) {
-  p.Errors = make([]string, 0)
+func (p *Position) IsValid() bool {
+	p.Errors = make([]string, 0)
 
-  if p.PositionType != "income" && p.PositionType != "expense" {
-    p.AddError("type", "must be either income or expense")
-  }
-  if p.Currency == "" {
-    p.AddError("currency", "must be present")
-  }
-  if p.Account == "" {
-    p.AddError("account", "must be present")
-  }
-  if p.InvoiceDate == (ShortDate{}) {
-    p.AddError("invoice_date", "must be present")
-  }
-  if p.InvoiceNumber == "" {
-    p.AddError("invoice_number", "must be present")
-  }
+	if p.PositionType != "income" && p.PositionType != "expense" {
+		p.AddError("type", "must be either income or expense")
+	}
+	if p.Currency == "" {
+		p.AddError("currency", "must be present")
+	}
+	if p.Account == "" {
+		p.AddError("account", "must be present")
+	}
+	if p.InvoiceDate == (ShortDate{}) {
+		p.AddError("invoice_date", "must be present")
+	}
+	if p.InvoiceNumber == "" {
+		p.AddError("invoice_number", "must be present")
+	}
 
-  return len(p.Errors) == 0
+	return len(p.Errors) == 0
 }
 
-func (p *Position) AddError(attr string, errorMsg string) () {
-  p.Errors = append(p.Errors, attr + ":" + errorMsg)
+func (p *Position) AddError(attr string, errorMsg string) {
+	p.Errors = append(p.Errors, attr+":"+errorMsg)
 }
 
-func (p *Position) StoreAttachment(uploadDirectory string) (error) {
-  if p.EncodedAttachment == "" || p.EncodedFileExtension == "" {
-    return nil
-  }
+func (p *Position) StoreAttachment(uploadDirectory string) error {
+	if p.EncodedAttachment == "" || p.EncodedFileExtension == "" {
+		return nil
+	}
 
-  data, err := base64.StdEncoding.DecodeString(p.EncodedAttachment)
-  if err != nil {
-    return err
-  }
+	data, err := base64.StdEncoding.DecodeString(p.EncodedAttachment)
+	if err != nil {
+		return err
+	}
 
-  if err := os.MkdirAll("./" + uploadDirectory + "/", 0744); err != nil {
-    return err
-  }
-  filePath := fmt.Sprintf("./%v/%d.%v", uploadDirectory, p.Id, p.EncodedFileExtension)
+	if err := os.MkdirAll("./"+uploadDirectory+"/", 0755); err != nil {
+		return err
+	}
+	filePath := fmt.Sprintf("./%v/%d.%v", uploadDirectory, p.Id, p.EncodedFileExtension)
 
-  if err := ioutil.WriteFile(filePath, data, 0744); err != nil {
-    return err
-  }
-  p.AttachmentPath = filePath
-  return nil
+	if err := ioutil.WriteFile(filePath, data, 0755); err != nil {
+		return err
+	}
+	p.AttachmentPath = filePath
+	return nil
 }

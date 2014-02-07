@@ -1,11 +1,11 @@
 package main
 
 import (
-	 // "errors"
+	// "errors"
+	"./models"
 	_ "database/sql"
 	"encoding/json"
 	"fmt"
-	"./models"
 	"github.com/eaigner/jet"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -71,7 +71,7 @@ func FiscalPeriodDeletePositionHandler(w http.ResponseWriter, req *http.Request,
 		io.WriteString(w, fmt.Sprintf(`{ "errors": "%v" }`, err))
 		return
 	}
-	os.Remove( position.AttachmentPath )
+	os.Remove(position.AttachmentPath)
 
 	io.WriteString(w, "")
 }
