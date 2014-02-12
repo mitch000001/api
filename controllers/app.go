@@ -17,13 +17,18 @@ func (app *App) SetupDb() *jet.Db {
     return app.Db
   }
 
-  var revDsn = os.Getenv("REV_DSN")
+  database := os.Getenv("DATABASE")
+  if database == "" {
+    database = "umsatz"
+  }
+
+  revDsn := os.Getenv("REV_DSN")
   if revDsn == "" {
     user, err := user.Current()
     if err != nil {
       log.Fatal(err)
     }
-    revDsn = "user=" + user.Username + " dbname=umsatz sslmode=disable"
+    revDsn = "user=" + user.Username + " dbname=" + database + " sslmode=disable"
   }
 
   newDb, err := jet.Open("postgres", revDsn)
