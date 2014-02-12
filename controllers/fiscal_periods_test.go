@@ -1,7 +1,6 @@
 package controllers
 
 import (
-  . "../controllers"
   "../models"
   "encoding/json"
   "net/http"
@@ -10,20 +9,11 @@ import (
   "testing"
 )
 
-var app *App
-
-func init() {
-  app = &App{}
-  app.SetupDb()
-}
-
-func ClearDb() {
-  app.Db.Query("DELETE FROM positions").Run()
-  app.Db.Query("DELETE FROM fiscal_periods").Run()
-}
-
 func TestFiscalPeriodsIndex(t *testing.T) {
-  ClearDb()
+  app := &App{}
+  app.SetupDb()
+  app.ClearDb()
+
   app.Db.Query("INSERT INTO fiscal_periods (year) VALUES (2014)").Run()
 
   request, _ := http.NewRequest("GET", "/fiscalPeriods", strings.NewReader(""))

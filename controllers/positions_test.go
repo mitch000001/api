@@ -3,28 +3,20 @@ package controllers
 import (
   "../models"
   "encoding/json"
-  "github.com/eaigner/jet"
   "net/http"
   "net/http/httptest"
   "strconv"
   "strings"
   "testing"
-  // "io/ioutil"
   "fmt"
 )
 
-func init() {
-  jetDb = SetupDb()
-}
-
-func ClearDb() {
-  jetDb.Query("DELETE FROM positions").Run()
-  jetDb.Query("DELETE FROM fiscal_periods").Run()
-}
-
 func TestFiscalPeriodsPositionCreation(t *testing.T) {
-  ClearDb()
-  jetDb.Query("INSERT INTO fiscal_periods (year) VALUES (2014)").Run()
+  app := &App{}
+  app.SetupDb()
+  app.ClearDb()
+
+  app.Db.Query("INSERT INTO fiscal_periods (year) VALUES (2014)").Run()
 
   request, _ := http.NewRequest("POST", "/fiscalPeriods/2014/positions", strings.NewReader(`
       {
@@ -41,7 +33,7 @@ func TestFiscalPeriodsPositionCreation(t *testing.T) {
   ))
   response := httptest.NewRecorder()
 
-  FiscalPeriodCreatePositionHandler(response, request, map[string]string{"year": "2014"})
+  app.FiscalPeriodCreatePositionHandler(response, request, map[string]string{"year": "2014"})
 
   if response.Code != http.StatusOK {
     t.Fatalf("Non-expected status code%v:\n\tbody: %+v", "200", response.Code)
@@ -68,7 +60,7 @@ func TestFiscalPeriodsPositionCreation(t *testing.T) {
       }`,
   ))
   updateResponse := httptest.NewRecorder()
-  FiscalPeriodUpdatePositionHandler(updateResponse, updateRequest, map[string]string{"year": "2014", "id": strconv.Itoa(position.Id)})
+  app.FiscalPeriodUpdatePositionHandler(updateResponse, updateRequest, map[string]string{"year": "2014", "id": strconv.Itoa(position.Id)})
 
   if response.Code != http.StatusOK {
     t.Fatalf("Non-expected status code%v:\n\tbody: %+v", "200", response.Code)
@@ -89,8 +81,10 @@ func TestFiscalPeriodsPositionCreation(t *testing.T) {
 }
 
 func TestFiscalPeriodsPositionCreationWithMissingPositionAttributes(t *testing.T) {
-  ClearDb()
-  jetDb.Query("INSERT INTO fiscal_periods (year) VALUES (2014)").Run()
+  app := &App{}
+  app.SetupDb()
+  app.ClearDb()
+  app.Db.Query("INSERT INTO fiscal_periods (year) VALUES (2014)").Run()
 
   request, _ := http.NewRequest("POST", "/fiscalPeriods/2014/positions", strings.NewReader(`
       {
@@ -106,7 +100,7 @@ func TestFiscalPeriodsPositionCreationWithMissingPositionAttributes(t *testing.T
   ))
   response := httptest.NewRecorder()
 
-  FiscalPeriodCreatePositionHandler(response, request, map[string]string{"year": "2014"})
+  app.FiscalPeriodCreatePositionHandler(response, request, map[string]string{"year": "2014"})
 
   if response.Code != http.StatusBadRequest {
     t.Fatalf("Non-expected status code%v:\n\tbody: %+v", "400", response.Code)

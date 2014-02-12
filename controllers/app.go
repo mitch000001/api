@@ -40,3 +40,8 @@ func (app *App) SetupDb() *jet.Db {
   app.Db = newDb
   return app.Db
 }
+
+func (app *App) ClearDb() {
+  app.Db.Query("DELETE FROM positions").Run()
+  app.Db.Query("DELETE FROM fiscal_periods").Run()
+}
