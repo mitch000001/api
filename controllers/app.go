@@ -1,9 +1,37 @@
 package controllers
 
 import (
+  "log"
+  "os"
+  "os/user"
   "github.com/eaigner/jet"
+  _ "github.com/lib/pq"
 )
 
 type App struct {
   Db *jet.Db
+}
+
+func (app *App) SetupDb() *jet.Db {
+  if app.Db != nil {
+    return app.Db
+  }
+
+  var revDsn = os.Getenv("REV_DSN")
+  if revDsn == "" {
+    user, err := user.Current()
+    if err != nil {
+      log.Fatal(err)
+    }
+    revDsn = "user=" + user.Username + " dbname=umsatz sslmode=disable"
+  }
+
+  newDb, err := jet.Open("postgres", revDsn)
+  if err != nil {
+    log.Fatal("failed to connect to postgres", err)
+  }
+  newDb.SetMaxIdleConns(100)
+
+  app.Db = newDb
+  return app.Db
 }

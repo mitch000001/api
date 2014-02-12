@@ -1,54 +1,25 @@
 package main
 
 import (
-	// "errors"
-	// . "./models"
 	. "./controllers"
 	_ "database/sql"
-	// "encoding/json"
 	"fmt"
-	"github.com/eaigner/jet"
 	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
-	// "io"
 	"log"
 	"net"
 	"net/http"
 	"os"
-	"os/user"
-	//  "log"
-	//  "math"
 	"syscall"
-	// "time"
 )
 
 var app *App
-
-func SetupDb() *jet.Db {
-	var revDsn = os.Getenv("REV_DSN")
-	if revDsn == "" {
-		user, err := user.Current()
-		if err != nil {
-			log.Fatal(err)
-		}
-		revDsn = "user=" + user.Username + " dbname=umsatz sslmode=disable"
-	}
-
-	newDb, err := jet.Open("postgres", revDsn)
-	if err != nil {
-		log.Fatal("failed to connect to postgres", err)
-	}
-	newDb.SetMaxIdleConns(100)
-
-	return newDb
-}
 
 func init() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 	log.SetPrefix(fmt.Sprintf("pid:%d ", syscall.Getpid()))
 
 	app = &App{}
-	app.Db = SetupDb()
+	app.SetupDb()
 }
 
 type RequestHandlerWithVars func(http.ResponseWriter, *http.Request, map[string]string)

@@ -1,34 +1,35 @@
-package main
+package controllers
 
 import (
-  "./models"
+  . "../controllers"
+  "../models"
   "encoding/json"
   "net/http"
   "net/http/httptest"
-  "strconv"
   "strings"
   "testing"
-  // "io/ioutil"
-  "fmt"
 )
 
+var app *App
+
 func init() {
-  jetDb = SetupDb()
+  app = &App{}
+  app.SetupDb()
 }
 
 func ClearDb() {
-  jetDb.Query("DELETE FROM positions").Run()
-  jetDb.Query("DELETE FROM fiscal_periods").Run()
+  app.Db.Query("DELETE FROM positions").Run()
+  app.Db.Query("DELETE FROM fiscal_periods").Run()
 }
 
 func TestFiscalPeriodsIndex(t *testing.T) {
   ClearDb()
-  jetDb.Query("INSERT INTO fiscal_periods (year) VALUES (2014)").Run()
+  app.Db.Query("INSERT INTO fiscal_periods (year) VALUES (2014)").Run()
 
   request, _ := http.NewRequest("GET", "/fiscalPeriods", strings.NewReader(""))
   response := httptest.NewRecorder()
 
-  FiscalPeriodIndexHandler(response, request)
+  app.FiscalPeriodIndexHandler(response, request)
 
   if response.Code != http.StatusOK {
     t.Fatalf("Non-expected status code%v:\n\tbody: %+v", "200", response.Code)

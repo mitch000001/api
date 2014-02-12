@@ -1,8 +1,9 @@
-package main
+package controllers
 
 import (
-  "./models"
+  "../models"
   "encoding/json"
+  "github.com/eaigner/jet"
   "net/http"
   "net/http/httptest"
   "strconv"
