@@ -17,7 +17,7 @@ sqitch -d umsatz_test deploy
 Then you can use `gom` to run the testsuite:
 
 ```
-REV_DSN="user=$(whoami) dbname=umsatz_test sslmode=disable" gom test
+DATABASE=umsatz_test go test ./...
 ```
 
 ## Executing
@@ -26,7 +26,7 @@ REV_DSN="user=$(whoami) dbname=umsatz_test sslmode=disable" gom test
 createdb umsatz
 sqitch deploy
 
-REV_DSN="user=$(whoami) dbname=umsatz sslmode=disable" gom run umsatz.go
+DATABASE=umsatz go run umsatz.go
 ```
 
 ## Fake Data
