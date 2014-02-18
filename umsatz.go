@@ -42,6 +42,7 @@ func main() {
 	log.Println("listening on %v", l.Addr())
 
 	r := mux.NewRouter()
+	r.HandleFunc("/accounts", app.AccountIndexHandler).Methods("GET")
 	r.HandleFunc("/fiscalPeriods", app.FiscalPeriodIndexHandler).Methods("GET")
 	r.Handle("/fiscalPeriods/{year}/positions", RequestHandlerWithVars(app.FiscalPeriodCreatePositionHandler)).Methods("POST")
 	r.Handle("/fiscalPeriods/{year}/positions/{id}", RequestHandlerWithVars(app.FiscalPeriodDeletePositionHandler)).Methods("DELETE")
