@@ -1,5 +1,0 @@
-gom 'github.com/eaigner/jet'
-gom 'github.com/gorilla/context'
-gom 'github.com/gorilla/mux'
-gom 'github.com/lib/pq'
-gom 'github.com/lib/pq/oid'
