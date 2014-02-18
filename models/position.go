@@ -25,7 +25,7 @@ func (date *ShortDate) UnmarshalJSON(data []byte) (err error) {
 type Position struct {
 	Id                   int       `json:"id,omitempty"`
 	Category             string    `json:"category"`
-	Account              string    `json:"account"`
+	AccountCode          string    `json:"accountCode"`
 	PositionType         string    `json:"type"`
 	InvoiceDate          ShortDate `json:"invoiceDate"`
 	InvoiceNumber        string    `json:"invoiceNumber"`
@@ -51,14 +51,14 @@ func (p *Position) IsValid() bool {
 	if p.Currency == "" {
 		p.AddError("currency", "must be present")
 	}
-	if p.Account == "" {
-		p.AddError("account", "must be present")
+	if p.AccountCode == "" {
+		p.AddError("accountCode", "must be present")
 	}
 	if p.InvoiceDate == (ShortDate{}) {
-		p.AddError("invoice_date", "must be present")
+		p.AddError("invoiceDate", "must be present")
 	}
 	if p.InvoiceNumber == "" {
-		p.AddError("invoice_number", "must be present")
+		p.AddError("invoiceNumber", "must be present")
 	}
 
 	return len(p.Errors) == 0

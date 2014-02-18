@@ -73,7 +73,7 @@ func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *ht
 
   updateError := app.Db.Query(`UPDATE "positions" SET
         category = $1,
-        account = $2,
+        account_code = $2,
         type = $3,
         invoice_date = $4,
         invoice_number = $5,
@@ -85,7 +85,7 @@ func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *ht
         attachment_path = $11
         WHERE ID = $12`,
     position.Category,
-    position.Account,
+    position.AccountCode,
     position.PositionType,
     time.Time(position.InvoiceDate),
     position.InvoiceNumber,
@@ -139,10 +139,10 @@ func (app *App) FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *ht
   }
 
   insertError := app.Db.Query(`INSERT INTO "positions"
-        (category, account, type, invoice_date, invoice_number, total_amount_cents, currency, tax, fiscal_period_id, description)
+        (category, account_code, type, invoice_date, invoice_number, total_amount_cents, currency, tax, fiscal_period_id, description)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $11) RETURNING *`,
     position.Category,
-    position.Account,
+    position.AccountCode,
     position.PositionType,
     time.Time(position.InvoiceDate),
     position.InvoiceNumber,

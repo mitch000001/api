@@ -22,7 +22,7 @@ func TestPositionValidations(t *testing.T) {
   if position.IsValid() {
     t.Fatalf("expected empty position to be invalid")
   }
-  position.Account = "5900"
+  position.AccountCode = "5900"
   if position.IsValid() {
     t.Fatalf("expected empty position to be invalid")
   }
@@ -41,7 +41,7 @@ func TestPositionUnmarshal(t *testing.T) {
   payload := `{
     "fiscalPeriodId": null,
     "category": "Some Category",
-    "account": "5900",
+    "accountCode": "5900",
     "type":"expense",
     "invoiceDate":"2014-01-01",
     "invoiceNumber":"20140101",
