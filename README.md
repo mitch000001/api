@@ -14,9 +14,10 @@ createdb umsatz_test
 sqitch -d umsatz_test deploy
 ```
 
-Then you can use `gom` to run the testsuite:
+Then you can use `gpm` to install dependencies and then run the test suite
 
 ```
+gpm
 DATABASE=umsatz_test go test ./...
 ```
 
