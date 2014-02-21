@@ -128,12 +128,11 @@ func (app *App) FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *ht
   position.FiscalPeriodId = fiscalPeriod.Id
 
   if !position.IsValid() {
-    log.Println("INFO: unable to insert position due to validation errors: %v", position.Errors)
+    log.Println("INFO: unable to insert position due to validation errors: %+v", position.Errors)
     w.WriteHeader(http.StatusBadRequest)
 
     if b, err := json.Marshal(position); err == nil {
       io.WriteString(w, string(b))
-      // fmt.Fprint(w, string(b))
     }
     return
   }

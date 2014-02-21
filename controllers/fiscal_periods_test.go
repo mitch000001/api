@@ -1,7 +1,7 @@
 package controllers
 
 import (
-  "../models"
+  . "../models"
   "encoding/json"
   "net/http"
   "net/http/httptest"
@@ -26,8 +26,7 @@ func TestFiscalPeriodsIndex(t *testing.T) {
   }
 
   decoder := json.NewDecoder(response.Body)
-
-  var fiscalPeriods []models.FiscalPeriod
+  var fiscalPeriods []FiscalPeriod
   _ = decoder.Decode(&fiscalPeriods)
   if len(fiscalPeriods) != 1 {
     t.Fatalf("Received wrong number of fiscalPeriods: %v - %v", fiscalPeriods, response.Body)

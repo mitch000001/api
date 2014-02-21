@@ -94,7 +94,7 @@ func TestFiscalPeriodsPositionCreationWithMissingPositionAttributes(t *testing.T
         "invoiceNumber": "20140201",
         "totalAmount": 2099,
         "currency": "EUR",
-        "tax": 700,
+        "tax": 705,
         "description": "Kunde A Februar"
       }`,
   ))
