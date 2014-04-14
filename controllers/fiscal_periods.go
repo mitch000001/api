@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"../models"
+	"github.com/umsatz/api/models"
 	"encoding/json"
 	"io"
 	"log"

@@ -1,7 +1,7 @@
 package main
 
 import (
-	. "./controllers"
+	. "github.com/umsatz/api/controllers"
 	_ "database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
