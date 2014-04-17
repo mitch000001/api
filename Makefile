@@ -12,7 +12,7 @@ GOBUILD    := GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(LDFLAGS) -o api
 ARCHIVE    := umsatz-$(VERSION)-$(GOOS)-$(GOARCH).tar.gz
 DISTDIR    := dist/$(GOOS)_$(GOARCH)
 
-.PHONY: default archive clean
+.PHONY: default archive clean install
 
 default: *.go
 	$(GOBUILD)
@@ -29,6 +29,9 @@ build:
 
 check:
 	@$(GO) list -f '{{join .Deps "\n"}}' | xargs $(GO) list -f '{{if not .Standard}}{{.ImportPath}} {{.Dir}}{{end}}' | column -t
+
+install:
+	@$(GO) list -f '{{join .Deps "\n"}}' | xargs $(GO) list -f '{{if not .Standard}}{{.ImportPath}}{{end}}' | xargs $(GO) get
 
 clean:
 	git clean -f -x -d
