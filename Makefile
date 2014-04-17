@@ -7,7 +7,7 @@ LDFLAGS    := -ldflags \
 
 GOOS       := $(shell go env GOOS)
 GOARCH     := $(shell go env GOARCH)
-GOBUILD    := GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(LDFLAGS) -o api
+GOBUILD    := GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(LDFLAGS)
 
 ARCHIVE    := umsatz-$(VERSION)-$(GOOS)-$(GOARCH).tar.gz
 DISTDIR    := dist/$(GOOS)_$(GOARCH)
