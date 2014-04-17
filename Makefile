@@ -20,7 +20,6 @@ default: *.go
 archive: dist/$(ARCHIVE)
 
 GO ?= go
-GOPATH := $(CURDIR)/../_vendor:$(GOPATH)
 
 all: build
 
@@ -29,9 +28,6 @@ build:
 
 check:
 	@$(GO) list -f '{{join .Deps "\n"}}' | xargs $(GO) list -f '{{if not .Standard}}{{.ImportPath}} {{.Dir}}{{end}}' | column -t
-
-install:
-	@$(GO) list -f '{{join .Deps "\n"}}' | xargs $(GO) list -f '{{if not .Standard}}{{.ImportPath}}{{end}}' | xargs $(GO) get
 
 clean:
 	git clean -f -x -d
