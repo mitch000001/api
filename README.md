@@ -17,7 +17,7 @@ sqitch -d umsatz_test deploy
 Then you can use `gpm` to install dependencies and then run the test suite
 
 ```
-gpm
+make check # install missing deps
 DATABASE=umsatz_test go test ./...
 ```
 
