@@ -20,8 +20,8 @@ func TestFiscalPeriodsPositionCreation(t *testing.T) {
 
 	request, _ := http.NewRequest("POST", "/fiscalPeriods/2014/positions", strings.NewReader(`
       {
-        "category": "Freelance",
-        "accountCode": "5900",
+        "accountCodeFrom": "5900",
+        "accountCodeTo": "1100",
         "type": "income",
         "invoiceDate": "2014-02-02",
         "invoiceNumber": "20140201",
@@ -44,12 +44,12 @@ func TestFiscalPeriodsPositionCreation(t *testing.T) {
 	var position models.Position
 	_ = decoder.Decode(&position)
 
-	if position.Category != "Freelance" {
-		t.Fatalf("did not persist category correctly, expected 'Freelance', got %#v", position.Category)
+	if position.AccountCodeFrom != "5900" {
+		t.Fatalf("did not persist accountCodeFrom correctly, got '%v'", position.AccountCodeFrom)
 	}
-	if position.AccountCode != "5900" {
-		t.Fatalf("did not persist accountCode correctly, got '%v'", position.AccountCode)
-	}
+  if position.AccountCodeTo != "1100" {
+    t.Fatalf("did not persist accountCodeTo correctly, got '%v'", position.AccountCodeTo)
+  }
 	if position.PositionType != "income" {
 		t.Fatalf("did not persist type correctly, got %v", position.PositionType)
 	}
@@ -88,8 +88,8 @@ func TestFiscalPeriodsPositionCreationWithMissingPositionAttributes(t *testing.T
 
 	request, _ := http.NewRequest("POST", "/fiscalPeriods/2014/positions", strings.NewReader(`
       {
-        "category": "Freelance",
-        "accountCode": "5900",
+        "accountCodeFrom": "5900",
+        "accountCodeTo": "5900",
         "invoiceDate": "2014-02-02",
         "invoiceNumber": "20140201",
         "totalAmount": 2099,

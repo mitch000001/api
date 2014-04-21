@@ -68,22 +68,24 @@ func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *ht
 	}
 
 	updateError := app.Db.Query(`UPDATE "positions" SET
-        category = $1,
-        account_code = $2,
+        account_code_from = $1,
+        account_code_to = $2,
         type = $3,
         invoice_date = $4,
-        invoice_number = $5,
-        total_amount_cents = $6,
-        currency = $7,
-        tax = $8,
-        fiscal_period_id = $9,
-        description = $10,
-        attachment_path = $11
-        WHERE ID = $12`,
-		position.Category,
-		position.AccountCode,
+        booking_date = $5,
+        invoice_number = $6,
+        total_amount_cents = $7,
+        currency = $8,
+        tax = $9,
+        fiscal_period_id = $10,
+        description = $11,
+        attachment_path = $12
+        WHERE ID = $13`,
+		position.AccountCodeFrom,
+		position.AccountCodeTo,
 		position.PositionType,
 		time.Time(position.InvoiceDate),
+		time.Time(position.BookingDate),
 		position.InvoiceNumber,
 		position.TotalAmountCents,
 		position.Currency,
@@ -134,22 +136,20 @@ func (app *App) FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *ht
 	}
 
 	insertError := app.Db.Query(`INSERT INTO "positions"
-        (category, account_code, type, invoice_date, invoice_number, total_amount_cents, currency, tax, fiscal_period_id, description)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $11) RETURNING *`,
-		position.Category,
-		position.AccountCode,
+        (account_code_from, account_code_to, type, invoice_date, booking_date, invoice_number, total_amount_cents, currency, tax, fiscal_period_id, description, attachment_path)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+		position.AccountCodeFrom,
+		position.AccountCodeTo,
 		position.PositionType,
 		time.Time(position.InvoiceDate),
+		time.Time(position.BookingDate),
 		position.InvoiceNumber,
 		position.TotalAmountCents,
 		position.Currency,
 		position.Tax,
 		position.FiscalPeriodId,
-		position.Description).Rows(&position)
-
-	if position.AttachmentPath != "" {
-		app.Db.Query(`UPDATE positions SET attachment_path = $1 WHERE id = $2`, position.AttachmentPath, position.Id).Run()
-	}
+		position.Description,
+		position.AttachmentPath).Rows(&position)
 
 	b, err := json.Marshal(position)
 

@@ -1,6 +1,7 @@
 package models
 
 type Account struct {
+  Id          int       `json:"id,omitempty"`
   Code        string        `json:"code"`
   Label       string        `json:"label"`
   Errors      []string      `json:"errors,omitempty"`

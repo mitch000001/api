@@ -20,10 +20,11 @@ func (date *ShortDate) UnmarshalJSON(data []byte) (err error) {
 
 type Position struct {
 	Id                   int       `json:"id,omitempty"`
-	Category             string    `json:"category"`
-	AccountCode          string    `json:"accountCode"`
+	AccountCodeFrom      string    `json:"accountCodeFrom"`
+	AccountCodeTo        string    `json:"accountCodeTo"`
 	PositionType         string    `json:"type"`
 	InvoiceDate          ShortDate `json:"invoiceDate"`
+	BookingDate          ShortDate `json:"bookingDate"`
 	InvoiceNumber        string    `json:"invoiceNumber"`
 	TotalAmountCents     int       `json:"totalAmountCents"`
 	Currency             string    `json:"currency"`
@@ -32,8 +33,6 @@ type Position struct {
 	Description          string    `json:"description"`
 	CreatedAt            time.Time `json:"createdAt"`
 	UpdatedAt            time.Time `json:"updatedAt"`
-	EncodedFileExtension string    `json:"encodedFileExtension,omitempty"`
-	EncodedAttachment    string    `json:"encodedAttachment,omitempty"`
 	AttachmentPath       string    `json:"attachmentPath"`
 	Errors               []string  `json:"errors,omitempty"`
 }
@@ -47,8 +46,11 @@ func (p *Position) IsValid() bool {
 	if p.Currency == "" {
 		p.AddError("currency", "must be present")
 	}
-	if p.AccountCode == "" {
-		p.AddError("accountCode", "must be present")
+	if p.AccountCodeFrom == "" {
+		p.AddError("accountCodeFrom", "must be present")
+	}
+	if p.AccountCodeTo == "" {
+		p.AddError("accountCodeTo", "must be present")
 	}
 	if p.InvoiceDate == (ShortDate{}) {
 		p.AddError("invoiceDate", "must be present")

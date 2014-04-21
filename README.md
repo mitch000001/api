@@ -30,8 +30,12 @@ sqitch deploy
 DATABASE=umsatz go run umsatz.go
 ```
 
+go clean -i -r
+
 ## Fake Data
 
-INSERT INTO "positions" (category, account_code, type, invoice_date, invoice_number, total_amount, currency, tax, fiscal_period_id, description) VALUES ('foo', '5900', 'income', '2013-04-04T00:00:00Z', '20130401', 2001, 'EUR', 1900, 2, '')
+INSERT INTO "fiscal_periods" (year) VALUES (2014);
+
+INSERT INTO "positions" (account_code_from, account_code_to, type, invoice_date, booking_date, invoice_number, total_amount_cents, currency, tax, fiscal_period_id, description, attachment_path) VALUES ('5900', '1100', 'income', '2013-04-04T00:00:00Z', '2013-04-07T00:00:00Z', '20130401', 2001, 'EUR', 1900, 1, '', '');
 
 [1]:https://github.com/theory/sqitch

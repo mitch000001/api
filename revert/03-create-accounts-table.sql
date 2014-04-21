@@ -2,6 +2,7 @@
 
 BEGIN;
 
+DROP INDEX account_code;
 DROP TABLE public.accounts;
 
 COMMIT;
