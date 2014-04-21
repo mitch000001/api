@@ -1,11 +1,7 @@
 package models
 
 import (
-	"encoding/base64"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
 	"time"
 )
 
@@ -66,26 +62,4 @@ func (p *Position) IsValid() bool {
 
 func (p *Position) AddError(attr string, errorMsg string) {
 	p.Errors = append(p.Errors, attr+":"+errorMsg)
-}
-
-func (p *Position) StoreAttachment(uploadDirectory string) error {
-	if p.EncodedAttachment == "" || p.EncodedFileExtension == "" {
-		return nil
-	}
-
-	data, err := base64.StdEncoding.DecodeString(p.EncodedAttachment)
-	if err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll("./"+uploadDirectory+"/", 0755); err != nil {
-		return err
-	}
-	filePath := fmt.Sprintf("./%v/%d.%v", uploadDirectory, p.Id, p.EncodedFileExtension)
-
-	if err := ioutil.WriteFile(filePath, data, 0755); err != nil {
-		return err
-	}
-	p.AttachmentPath = filePath
-	return nil
 }

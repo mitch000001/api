@@ -67,10 +67,6 @@ func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *ht
 		}
 	}
 
-	if err := position.StoreAttachment(fmt.Sprintf("uploads/%v", vars["year"])); err != nil {
-		log.Println("INFO: unable to store attachment: %v", err)
-	}
-
 	updateError := app.Db.Query(`UPDATE "positions" SET
         category = $1,
         account_code = $2,
@@ -150,12 +146,6 @@ func (app *App) FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *ht
 		position.Tax,
 		position.FiscalPeriodId,
 		position.Description).Rows(&position)
-
-	if storeErr := position.StoreAttachment(fmt.Sprintf("uploads/%v", vars["year"])); storeErr != nil {
-		log.Println("INFO: unable to store attachment: %v", storeErr)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
 
 	if position.AttachmentPath != "" {
 		app.Db.Query(`UPDATE positions SET attachment_path = $1 WHERE id = $2`, position.AttachmentPath, position.Id).Run()
