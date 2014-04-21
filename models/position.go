@@ -17,7 +17,12 @@ func (date ShortDate) MarshalJSON() ([]byte, error) {
 func (date *ShortDate) UnmarshalJSON(data []byte) (err error) {
 	strDate := string(data)
 	time, err := time.Parse("2006-01-02", strDate[1:len(strDate)-1])
-	*date = ShortDate(time)
+	if err != nil {
+		date = &ShortDate{}
+		err = nil
+	} else {
+		*date = ShortDate(time)
+	}
 	return err
 }
 

@@ -30,6 +30,8 @@ sqitch deploy
 DATABASE=umsatz go run umsatz.go
 ```
 
+## Remove build artifacts
+
 go clean -i -r
 
 ## Fake Data
