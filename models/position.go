@@ -8,6 +8,9 @@ import (
 type ShortDate time.Time
 
 func (date ShortDate) MarshalJSON() ([]byte, error) {
+	if time.Time(date).Format("2006-01-02") == "0001-01-01" {
+		return json.Marshal("")
+	}
 	return json.Marshal(time.Time(date).Format("2006-01-02"))
 }
 
