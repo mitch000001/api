@@ -23,7 +23,7 @@ func (app *App) FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Reques
 
 	for i, fiscalPeriod := range fiscalPeriods {
 		var positions []models.Position
-		err = app.Db.Query(`SELECT *, type as position_type FROM positions WHERE fiscal_period_id = $1`, fiscalPeriod.Id).Rows(&positions)
+		err = app.Db.Query(`SELECT *, type as position_type FROM positions WHERE fiscal_period_id = $1 ORDER BY invoice_date ASC`, fiscalPeriod.Id).Rows(&positions)
 		fiscalPeriods[i].Positions = positions
 	}
 
