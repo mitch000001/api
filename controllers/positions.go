@@ -18,14 +18,14 @@ func (app *App) FiscalPeriodPositionIndexHandler(w http.ResponseWriter, req *htt
 	app.Db.Query(`SELECT * FROM "fiscal_periods" WHERE year = $1 LIMIT 1`, vars["year"]).Rows(&fiscalPeriod)
 
 	var positions []Position
-	if err := app.Db.Query(`SELECT * FROM positions WHERE fiscal_period_id = $1 ORDER BY invoice_date ASC`, fiscalPeriod.Id).Rows(&positions); err != nil {
+	if err := app.Db.Query(`SELECT *, type as position_type FROM positions WHERE fiscal_period_id = $1 ORDER BY invoice_date ASC`, fiscalPeriod.Id).Rows(&positions); err != nil {
 		log.Println("database error", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	b, err := json.Marshal(positions)
-	// fmt.Println(string(b))
+
 	if err == nil {
 		io.WriteString(w, string(b))
 	} else {
