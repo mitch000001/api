@@ -11,6 +11,36 @@ import (
 	"testing"
 )
 
+func TestFiscalPeriodsPositionsIndex(t *testing.T) {
+  app := &App{}
+  app.SetupDb()
+  app.ClearDb()
+
+  var fiscalPeriod models.FiscalPeriod
+  app.Db.Query("INSERT INTO fiscal_periods (year) VALUES (2014) RETURNING *").Rows(&fiscalPeriod)
+  app.Db.Query(`INSERT INTO "positions"
+        (account_code_from, account_code_to, type, invoice_date, booking_date, invoice_number, total_amount_cents, currency, tax, fiscal_period_id, description, attachment_path)
+      VALUES
+        ('5900', '1100', 'expense', NOW(), NOW(), '2001312', 0, 'EUR', 0, $1, '', '')`, fiscalPeriod.Id).Run()
+
+  request, _ := http.NewRequest("GET", "/fiscalPeriods/2014/positions", strings.NewReader(""))
+  response := httptest.NewRecorder()
+
+  app.FiscalPeriodPositionIndexHandler(response, request, map[string]string{"year": "2014"})
+
+  if response.Code != http.StatusOK {
+    t.Fatalf("Non-expected status code%v:\n\tbody: %+v", "200", response.Code)
+  }
+
+  decoder := json.NewDecoder(response.Body)
+  var positions []models.Position
+  _ = decoder.Decode(&positions)
+  if len(positions) != 1 {
+    t.Fatalf("Received wrong number of positions: %v - %v", positions, response.Body)
+  }
+}
+
+
 func TestFiscalPeriodsPositionCreation(t *testing.T) {
 	app := &App{}
 	app.SetupDb()

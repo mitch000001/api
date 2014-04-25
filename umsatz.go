@@ -45,6 +45,7 @@ func main() {
 	r.HandleFunc("/accounts", app.AccountIndexHandler).Methods("GET")
 	r.HandleFunc("/accounts", app.CreateAccountHandler).Methods("POST")
 	r.HandleFunc("/fiscalPeriods", app.FiscalPeriodIndexHandler).Methods("GET")
+	r.Handle("/fiscalPeriods/{year}/positions", RequestHandlerWithVars(app.FiscalPeriodPositionIndexHandler)).Methods("GET")
 	r.Handle("/fiscalPeriods/{year}/positions", RequestHandlerWithVars(app.FiscalPeriodCreatePositionHandler)).Methods("POST")
 	r.Handle("/fiscalPeriods/{year}/positions/{id}", RequestHandlerWithVars(app.FiscalPeriodDeletePositionHandler)).Methods("DELETE")
 	r.Handle("/fiscalPeriods/{year}/positions/{id}", RequestHandlerWithVars(app.FiscalPeriodUpdatePositionHandler)).Methods("PUT")

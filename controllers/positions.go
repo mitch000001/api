@@ -11,6 +11,30 @@ import (
 	"time"
 )
 
+func (app *App) FiscalPeriodPositionIndexHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
+	log.Println("GET /fiscalPeriods/%v/positions", vars["year"])
+
+	var fiscalPeriod FiscalPeriod
+	app.Db.Query(`SELECT * FROM "fiscal_periods" WHERE year = $1 LIMIT 1`, vars["year"]).Rows(&fiscalPeriod)
+
+	var positions []Position
+	if err := app.Db.Query(`SELECT * FROM positions WHERE fiscal_period_id = $1 ORDER BY invoice_date ASC`, fiscalPeriod.Id).Rows(&positions); err != nil {
+		log.Println("database error", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	b, err := json.Marshal(positions)
+	// fmt.Println(string(b))
+	if err == nil {
+		io.WriteString(w, string(b))
+	} else {
+		fmt.Println("ERRRRRORRR %v, %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "{}")
+	}
+}
+
 func (app *App) FiscalPeriodDeletePositionHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
 	log.Println("DELETE /fiscalPeriods/%v/positions/%v", vars["year"], vars["id"])
 
