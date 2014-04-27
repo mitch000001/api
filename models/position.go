@@ -42,11 +42,11 @@ type Position struct {
 	CreatedAt            time.Time `json:"createdAt"`
 	UpdatedAt            time.Time `json:"updatedAt"`
 	AttachmentPath       string    `json:"attachmentPath"`
-	Errors               []string  `json:"errors,omitempty"`
+	Errors               map[string][]string  `json:"errors,omitempty"`
 }
 
 func (p *Position) IsValid() bool {
-	p.Errors = make([]string, 0)
+	p.Errors = make(map[string][]string)
 
 	if p.PositionType != "income" && p.PositionType != "expense" {
 		p.AddError("type", "must be either income or expense")
@@ -71,5 +71,5 @@ func (p *Position) IsValid() bool {
 }
 
 func (p *Position) AddError(attr string, errorMsg string) {
-	p.Errors = append(p.Errors, attr+":"+errorMsg)
+	p.Errors[attr] = append(p.Errors[attr], errorMsg)
 }
