@@ -2,7 +2,10 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
+
+	"github.com/melvinmt/gt"
 )
 
 type ShortDate time.Time
@@ -27,49 +30,49 @@ func (date *ShortDate) UnmarshalJSON(data []byte) (err error) {
 }
 
 type Position struct {
-	Id                   int       `json:"id,omitempty"`
-	AccountCodeFrom      string    `json:"accountCodeFrom"`
-	AccountCodeTo        string    `json:"accountCodeTo"`
-	PositionType         string    `json:"type"`
-	InvoiceDate          ShortDate `json:"invoiceDate"`
-	BookingDate          ShortDate `json:"bookingDate"`
-	InvoiceNumber        string    `json:"invoiceNumber"`
-	TotalAmountCents     int       `json:"totalAmountCents"`
-	Currency             string    `json:"currency"`
-	Tax                  int       `json:"tax"`
-	FiscalPeriodId       int       `json:"fiscalPeriodId"`
-	Description          string    `json:"description"`
-	CreatedAt            time.Time `json:"createdAt"`
-	UpdatedAt            time.Time `json:"updatedAt"`
-	AttachmentPath       string    `json:"attachmentPath"`
-	Errors               map[string][]string  `json:"errors,omitempty"`
+	Id               int                 `json:"id,omitempty"`
+	AccountCodeFrom  string              `json:"accountCodeFrom"`
+	AccountCodeTo    string              `json:"accountCodeTo"`
+	PositionType     string              `json:"type"`
+	InvoiceDate      ShortDate           `json:"invoiceDate"`
+	BookingDate      ShortDate           `json:"bookingDate"`
+	InvoiceNumber    string              `json:"invoiceNumber"`
+	TotalAmountCents int                 `json:"totalAmountCents"`
+	Currency         string              `json:"currency"`
+	Tax              int                 `json:"tax"`
+	FiscalPeriodId   int                 `json:"fiscalPeriodId"`
+	Description      string              `json:"description"`
+	CreatedAt        time.Time           `json:"createdAt"`
+	UpdatedAt        time.Time           `json:"updatedAt"`
+	AttachmentPath   string              `json:"attachmentPath"`
+	Errors           map[string][]string `json:"errors,omitempty"`
 }
 
-func (p *Position) IsValid() bool {
+func (p *Position) IsValid(g *gt.Build) bool {
 	p.Errors = make(map[string][]string)
 
+	addError := func(attr string, msg string) {
+		p.Errors[attr] = append(p.Errors[attr], g.T(fmt.Sprintf("validations.attribute.%s", msg)))
+	}
+
 	if p.PositionType != "income" && p.PositionType != "expense" {
-		p.AddError("type", "must be either income or expense")
+		addError("type", "inclusion")
 	}
 	if p.Currency == "" {
-		p.AddError("currency", "must be present")
+		addError("currency", "missing")
 	}
 	if p.AccountCodeFrom == "" {
-		p.AddError("accountCodeFrom", "must be present")
+		addError("accountCodeFrom", "missing")
 	}
 	if p.AccountCodeTo == "" {
-		p.AddError("accountCodeTo", "must be present")
+		addError("accountCodeTo", "missing")
 	}
 	if p.InvoiceDate == (ShortDate{}) {
-		p.AddError("invoiceDate", "must be present")
+		addError("invoiceDate", "missing")
 	}
 	if p.InvoiceNumber == "" {
-		p.AddError("invoiceNumber", "must be present")
+		addError("invoiceNumber", "missing")
 	}
 
 	return len(p.Errors) == 0
-}
-
-func (p *Position) AddError(attr string, errorMsg string) {
-	p.Errors[attr] = append(p.Errors[attr], errorMsg)
 }

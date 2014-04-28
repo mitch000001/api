@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	. "github.com/umsatz/api/models"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	. "github.com/umsatz/api/models"
 )
 
 func (app *App) FiscalPeriodPositionIndexHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
@@ -82,7 +82,7 @@ func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *ht
 		log.Fatal("decode error", err)
 	}
 
-	if !position.IsValid() {
+	if !position.IsValid(app.Build) {
 		log.Println("INFO: unable to update position due to validation errors: %v", position.Errors)
 		w.WriteHeader(http.StatusBadRequest)
 
@@ -132,6 +132,8 @@ func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *ht
 
 func (app *App) FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	app.SetLocale(req)
+
 	log.Println("POST /fiscalPeriods/%v/positions", vars["year"])
 
 	var fiscalPeriods []FiscalPeriod
@@ -149,7 +151,7 @@ func (app *App) FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *ht
 
 	position.FiscalPeriodId = fiscalPeriod.Id
 
-	if !position.IsValid() {
+	if !position.IsValid(app.Build) {
 		log.Println("INFO: unable to insert position due to validation errors: %+v", position.Errors)
 		w.WriteHeader(http.StatusBadRequest)
 

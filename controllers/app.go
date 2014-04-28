@@ -1,22 +1,23 @@
 package controllers
 
 import (
-	"github.com/eaigner/jet"
-	_ "github.com/lib/pq"
 	"log"
+	"net/http"
 	"os"
 	"os/user"
+	"strings"
+
+	"github.com/eaigner/jet"
+	_ "github.com/lib/pq"
+	"github.com/melvinmt/gt"
 )
 
 type App struct {
 	Db *jet.Db
+	*gt.Build
 }
 
-func (app *App) SetupDb() *jet.Db {
-	if app.Db != nil {
-		return app.Db
-	}
-
+func SetupDb() *jet.Db {
 	database := os.Getenv("DATABASE")
 	if database == "" {
 		database = "umsatz"
@@ -37,8 +38,14 @@ func (app *App) SetupDb() *jet.Db {
 	}
 	newDb.SetMaxIdleConns(100)
 
-	app.Db = newDb
-	return app.Db
+	return newDb
+}
+
+func (app *App) SetLocale(req *http.Request) {
+	if len(req.Header["Accept-Language"]) > 0 {
+		locale := strings.Split(req.Header["Accept-Language"][0], "-")[0]
+		app.SetTarget(locale)
+	}
 }
 
 func (app *App) ClearDb() {
