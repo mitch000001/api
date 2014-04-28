@@ -69,6 +69,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/accounts", app.AccountIndexHandler).Methods("GET")
 	r.HandleFunc("/accounts", app.CreateAccountHandler).Methods("POST")
+	r.Handle("/accounts/{id}", RequestHandlerWithVars(app.UpdateAccountHandler)).Methods("PUT")
 	r.HandleFunc("/fiscalPeriods", app.FiscalPeriodIndexHandler).Methods("GET")
 	r.Handle("/fiscalPeriods/{year}/positions", RequestHandlerWithVars(app.FiscalPeriodPositionIndexHandler)).Methods("GET")
 	r.Handle("/fiscalPeriods/{year}/positions", RequestHandlerWithVars(app.FiscalPeriodCreatePositionHandler)).Methods("POST")
