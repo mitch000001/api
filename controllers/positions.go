@@ -12,8 +12,6 @@ import (
 )
 
 func (app *App) FiscalPeriodPositionIndexHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
-	log.Println("GET /fiscalPeriods/%v/positions", vars["year"])
-
 	var fiscalPeriod FiscalPeriod
 	app.Db.Query(`SELECT * FROM "fiscal_periods" WHERE year = $1 LIMIT 1`, vars["year"]).Rows(&fiscalPeriod)
 
@@ -36,8 +34,6 @@ func (app *App) FiscalPeriodPositionIndexHandler(w http.ResponseWriter, req *htt
 }
 
 func (app *App) FiscalPeriodDeletePositionHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
-	log.Println("DELETE /fiscalPeriods/%v/positions/%v", vars["year"], vars["id"])
-
 	var fiscalPeriods []FiscalPeriod
 	app.Db.Query(`SELECT * FROM "fiscal_periods" WHERE year = $1 LIMIT 1`, vars["year"]).Rows(&fiscalPeriods)
 	var fiscalPeriod FiscalPeriod = fiscalPeriods[0]
@@ -63,7 +59,6 @@ func (app *App) FiscalPeriodDeletePositionHandler(w http.ResponseWriter, req *ht
 }
 
 func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
-	log.Println("PUT /fiscalPeriods/%v/positions/%v", vars["year"], vars["id"])
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	var fiscalPeriods []FiscalPeriod

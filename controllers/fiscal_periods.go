@@ -1,17 +1,17 @@
 package controllers
 
 import (
-	"github.com/umsatz/api/models"
 	"encoding/json"
 	"io"
 	"log"
 	"net/http"
+
+	"github.com/umsatz/api/models"
 )
 
 func (app *App) FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	log.Println("GET /fiscalPeriods")
 	var fiscalPeriods []models.FiscalPeriod
 	err := app.Db.Query(`SELECT * FROM "fiscal_periods" ORDER BY year ASC`).Rows(&fiscalPeriods)
 

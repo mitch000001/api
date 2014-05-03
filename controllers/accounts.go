@@ -12,7 +12,6 @@ import (
 
 func (app *App) AccountIndexHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	log.Println("GET /accounts")
 
 	var accounts []models.Account
 	if err := app.Db.Query(`SELECT * FROM accounts ORDER BY code ASC`).Rows(&accounts); err != nil {
@@ -32,7 +31,6 @@ func (app *App) AccountIndexHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func (app *App) UpdateAccountHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
-	log.Println("PUT /accounts/%v", vars["id"])
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	var account models.Account
@@ -76,7 +74,6 @@ func (app *App) UpdateAccountHandler(w http.ResponseWriter, req *http.Request, v
 
 func (app *App) CreateAccountHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	log.Println("POST /accounts")
 
 	dec := json.NewDecoder(req.Body)
 	var account models.Account

@@ -54,6 +54,13 @@ func (requestHandler RequestHandlerWithVars) ServeHTTP(w http.ResponseWriter, re
 	requestHandler(w, req, vars)
 }
 
+func logHandler(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%v %v", r.Method, r.URL.Path)
+		next.ServeHTTP(w, r)
+	}
+}
+
 func main() {
 	var port string = os.Getenv("PORT")
 	if port == "" {
@@ -67,14 +74,14 @@ func main() {
 	log.Println("listening on %v", l.Addr())
 
 	r := mux.NewRouter()
-	r.HandleFunc("/accounts", app.AccountIndexHandler).Methods("GET")
-	r.HandleFunc("/accounts", app.CreateAccountHandler).Methods("POST")
-	r.Handle("/accounts/{id}", RequestHandlerWithVars(app.UpdateAccountHandler)).Methods("PUT")
-	r.HandleFunc("/fiscalPeriods", app.FiscalPeriodIndexHandler).Methods("GET")
-	r.Handle("/fiscalPeriods/{year}/positions", RequestHandlerWithVars(app.FiscalPeriodPositionIndexHandler)).Methods("GET")
-	r.Handle("/fiscalPeriods/{year}/positions", RequestHandlerWithVars(app.FiscalPeriodCreatePositionHandler)).Methods("POST")
-	r.Handle("/fiscalPeriods/{year}/positions/{id}", RequestHandlerWithVars(app.FiscalPeriodDeletePositionHandler)).Methods("DELETE")
-	r.Handle("/fiscalPeriods/{year}/positions/{id}", RequestHandlerWithVars(app.FiscalPeriodUpdatePositionHandler)).Methods("PUT")
+	r.Handle("/accounts", logHandler(http.HandlerFunc(app.AccountIndexHandler))).Methods("GET")
+	r.Handle("/accounts", logHandler(http.HandlerFunc(app.CreateAccountHandler))).Methods("POST")
+	r.Handle("/accounts/{id}", logHandler(RequestHandlerWithVars(app.UpdateAccountHandler))).Methods("PUT")
+	r.Handle("/fiscalPeriods", logHandler(http.HandlerFunc(app.FiscalPeriodIndexHandler))).Methods("GET")
+	r.Handle("/fiscalPeriods/{year}/positions", logHandler(RequestHandlerWithVars(app.FiscalPeriodPositionIndexHandler))).Methods("GET")
+	r.Handle("/fiscalPeriods/{year}/positions", logHandler(RequestHandlerWithVars(app.FiscalPeriodCreatePositionHandler))).Methods("POST")
+	r.Handle("/fiscalPeriods/{year}/positions/{id}", logHandler(RequestHandlerWithVars(app.FiscalPeriodDeletePositionHandler))).Methods("DELETE")
+	r.Handle("/fiscalPeriods/{year}/positions/{id}", logHandler(RequestHandlerWithVars(app.FiscalPeriodUpdatePositionHandler))).Methods("PUT")
 
 	http.Handle("/", r)
 	http.Serve(l, r)
