@@ -15,7 +15,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/melvinmt/gt"
-	. "github.com/umsatz/api/controllers"
 )
 
 var app *App

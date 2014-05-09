@@ -1,7 +1,6 @@
-package controllers
+package main
 
 import (
-	. "github.com/umsatz/api/models"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -9,9 +8,16 @@ import (
 	"testing"
 )
 
+func TestAccountValidations(t *testing.T) {
+	account := Account{}
+
+	if account.IsValid() {
+		t.Fatalf("expected empty account to be invalid")
+	}
+}
+
 func TestAccountsIndex(t *testing.T) {
-	app := &App{}
-	app.SetupDb()
+	app = &App{SetupDb(), I18nInit()}
 	app.ClearDb()
 
 	if err := app.Db.Query(`INSERT INTO accounts (code, label) VALUES ('5900', 'Fremdleistungen') RETURNING *`).Run(); err != nil {

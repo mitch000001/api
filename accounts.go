@@ -1,4 +1,4 @@
-package controllers
+package main
 
 import (
 	"encoding/json"
@@ -6,14 +6,36 @@ import (
 	"io"
 	"log"
 	"net/http"
-
-	"github.com/umsatz/api/models"
 )
+
+type Account struct {
+	Id     int      `json:"id,omitempty"`
+	Code   string   `json:"code"`
+	Label  string   `json:"label"`
+	Errors []string `json:"errors,omitempty"`
+}
+
+func (a *Account) AddError(attr string, errorMsg string) {
+	a.Errors = append(a.Errors, attr+":"+errorMsg)
+}
+
+func (a *Account) IsValid() bool {
+	a.Errors = make([]string, 0)
+
+	if a.Code == "" {
+		a.AddError("code", "must be present")
+	}
+	if a.Label == "" {
+		a.AddError("label", "must be present")
+	}
+
+	return len(a.Errors) == 0
+}
 
 func (app *App) AccountIndexHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	var accounts []models.Account
+	var accounts []Account
 	if err := app.Db.Query(`SELECT * FROM accounts ORDER BY code ASC`).Rows(&accounts); err != nil {
 		log.Println("database error", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -33,7 +55,7 @@ func (app *App) AccountIndexHandler(w http.ResponseWriter, req *http.Request) {
 func (app *App) UpdateAccountHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	var account models.Account
+	var account Account
 	err := app.Db.Query(`SELECT * FROM accounts WHERE id = $1`, vars["id"]).Rows(&account)
 	if err != nil {
 		log.Fatal("unknown account", err)
@@ -76,7 +98,7 @@ func (app *App) CreateAccountHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	dec := json.NewDecoder(req.Body)
-	var account models.Account
+	var account Account
 	if err := dec.Decode(&account); err != nil && err != io.EOF {
 		log.Println("decode error", err)
 		w.WriteHeader(http.StatusBadRequest)

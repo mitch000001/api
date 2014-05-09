@@ -1,4 +1,4 @@
-package controllers
+package main
 
 import (
 	"log"
@@ -7,9 +7,9 @@ import (
 	"os/user"
 	"strings"
 
-	"github.com/eaigner/jet"
 	_ "github.com/lib/pq"
 	"github.com/melvinmt/gt"
+	"github.com/splicers/jet"
 )
 
 type App struct {

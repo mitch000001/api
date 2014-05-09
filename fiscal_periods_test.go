@@ -1,7 +1,6 @@
-package controllers
+package main
 
 import (
-	. "github.com/umsatz/api/models"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -10,8 +9,7 @@ import (
 )
 
 func TestFiscalPeriodsIndex(t *testing.T) {
-	app := &App{}
-	app.SetupDb()
+	app = &App{SetupDb(), I18nInit()}
 	app.ClearDb()
 
 	app.Db.Query("INSERT INTO fiscal_periods (year) VALUES (2014)").Run()
