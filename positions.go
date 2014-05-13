@@ -168,7 +168,8 @@ func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *ht
         tax = $9,
         fiscal_period_id = $10,
         description = $11,
-        attachment_path = $12
+        attachment_path = $12,
+        updated_at = now()::timestamptz
         WHERE ID = $13`,
 		position.AccountCodeFrom,
 		position.AccountCodeTo,
@@ -189,7 +190,7 @@ func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *ht
 	if err == nil && updateError == nil {
 		io.WriteString(w, string(b))
 	} else {
-		fmt.Println("ERRRRRORRR %v, %v", err, updateError)
+		fmt.Printf(`Error updating position: %#v, %#v\n`, err, updateError)
 		w.WriteHeader(http.StatusBadRequest)
 		io.WriteString(w, "{}")
 	}
