@@ -4,3 +4,4 @@
 01-create-fiscalPeriods-table 2014-02-01T21:07:36Z Raphael Randschau <nicolai86@kepler-22b.local># create fiscal_periods table
 02-create-positions-table [01-create-fiscalPeriods-table] 2014-02-02T11:12:57Z Raphael Randschau <nicolai86@kepler-22b.fritz.box># add positions for fiscalPeriods
 03-create-accounts-table 2014-02-18T17:31:24Z Raphael Randschau <nicolai86@kepler-22b.local># add accounts table used to group fiscal period positions
+04-add-euro_total_amount_cents-to-positions [02-create-positions-table] 2014-05-13T16:32:24Z Raphael Randschau <nicolai86@kepler-22b.local># add a column to keep track of euro converted values\n\nthe column is managed by the api internally and is read-only
