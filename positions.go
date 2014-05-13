@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -34,22 +35,23 @@ func (date *ShortDate) UnmarshalJSON(data []byte) (err error) {
 }
 
 type Position struct {
-	Id               int                 `json:"id,omitempty"`
-	AccountCodeFrom  string              `json:"accountCodeFrom"`
-	AccountCodeTo    string              `json:"accountCodeTo"`
-	PositionType     string              `json:"type"`
-	InvoiceDate      ShortDate           `json:"invoiceDate"`
-	BookingDate      ShortDate           `json:"bookingDate"`
-	InvoiceNumber    string              `json:"invoiceNumber"`
-	TotalAmountCents int                 `json:"totalAmountCents"`
-	Currency         string              `json:"currency"`
-	Tax              int                 `json:"tax"`
-	FiscalPeriodId   int                 `json:"fiscalPeriodId"`
-	Description      string              `json:"description"`
-	CreatedAt        time.Time           `json:"createdAt"`
-	UpdatedAt        time.Time           `json:"updatedAt"`
-	AttachmentPath   string              `json:"attachmentPath"`
-	Errors           map[string][]string `json:"errors,omitempty"`
+	Id                    int                 `json:"id,omitempty"`
+	AccountCodeFrom       string              `json:"accountCodeFrom"`
+	AccountCodeTo         string              `json:"accountCodeTo"`
+	PositionType          string              `json:"type"`
+	InvoiceDate           ShortDate           `json:"invoiceDate"`
+	BookingDate           ShortDate           `json:"bookingDate"`
+	InvoiceNumber         string              `json:"invoiceNumber"`
+	TotalAmountCents      int                 `json:"totalAmountCents"`
+	TotalAmountCentsInEur int                 `json:"totalAmountCentsEur"`
+	Currency              string              `json:"currency"`
+	Tax                   int                 `json:"tax"`
+	FiscalPeriodId        int                 `json:"fiscalPeriodId"`
+	Description           string              `json:"description"`
+	CreatedAt             time.Time           `json:"createdAt"`
+	UpdatedAt             time.Time           `json:"updatedAt"`
+	AttachmentPath        string              `json:"attachmentPath"`
+	Errors                map[string][]string `json:"errors,omitempty"`
 }
 
 func (p *Position) IsValid(g *gt.Build) bool {
@@ -79,6 +81,41 @@ func (p *Position) IsValid(g *gt.Build) bool {
 	}
 
 	return len(p.Errors) == 0
+}
+
+type shortExchangeInfo struct {
+	Currency string  `json:"currency"`
+	Rate     float32 `json:"rate"`
+}
+
+type exchangeInfo struct {
+	Date string `json:"date"`
+	shortExchangeInfo
+}
+
+func setTotalAmountCentsInEur(p *Position) error {
+	if p.Currency == "EUR" {
+		p.TotalAmountCentsInEur = p.TotalAmountCents
+	} else {
+		url := fmt.Sprintf(`http://127.0.0.1:8081/%v/%v`, time.Time(p.InvoiceDate).Format("2006-01-02"), p.Currency)
+
+		resp, err := http.Get(url)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		body, err2 := ioutil.ReadAll(resp.Body)
+		if err2 != nil {
+			return err2
+		}
+
+		var v exchangeInfo
+		json.Unmarshal(body, &v)
+		fmt.Printf(`%#v`, v)
+		p.TotalAmountCentsInEur = int(float32(p.TotalAmountCents) / v.Rate)
+	}
+	return nil
 }
 
 func (app *App) FiscalPeriodPositionIndexHandler(w http.ResponseWriter, req *http.Request, vars map[string]string) {
@@ -156,6 +193,13 @@ func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *ht
 		}
 	}
 
+	if err := setTotalAmountCentsInEur(&position); err != nil {
+		fmt.Println("currency lookup error %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "{}")
+		return
+	}
+
 	updateError := app.Db.Query(`UPDATE "positions" SET
         account_code_from = $1,
         account_code_to = $2,
@@ -164,13 +208,14 @@ func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *ht
         booking_date = $5,
         invoice_number = $6,
         total_amount_cents = $7,
-        currency = $8,
-        tax = $9,
-        fiscal_period_id = $10,
-        description = $11,
-        attachment_path = $12,
+        total_amount_cents_in_eur = $8,
+        currency = $9,
+        tax = $10,
+        fiscal_period_id = $11,
+        description = $12,
+        attachment_path = $13,
         updated_at = now()::timestamptz
-        WHERE ID = $13`,
+        WHERE ID = $14`,
 		position.AccountCodeFrom,
 		position.AccountCodeTo,
 		position.PositionType,
@@ -178,6 +223,7 @@ func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *ht
 		time.Time(position.BookingDate),
 		position.InvoiceNumber,
 		position.TotalAmountCents,
+		position.TotalAmountCentsInEur,
 		position.Currency,
 		position.Tax,
 		position.FiscalPeriodId,
@@ -227,9 +273,16 @@ func (app *App) FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *ht
 		return
 	}
 
+	if err := setTotalAmountCentsInEur(&position); err != nil {
+		fmt.Println("currency lookup error %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "{}")
+		return
+	}
+
 	insertError := app.Db.Query(`INSERT INTO "positions"
-        (account_code_from, account_code_to, type, invoice_date, booking_date, invoice_number, total_amount_cents, currency, tax, fiscal_period_id, description, attachment_path)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+        (account_code_from, account_code_to, type, invoice_date, booking_date, invoice_number, total_amount_cents, total_amount_cents_in_eur, currency, tax, fiscal_period_id, description, attachment_path)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
 		position.AccountCodeFrom,
 		position.AccountCodeTo,
 		position.PositionType,
@@ -237,6 +290,7 @@ func (app *App) FiscalPeriodCreatePositionHandler(w http.ResponseWriter, req *ht
 		time.Time(position.BookingDate),
 		position.InvoiceNumber,
 		position.TotalAmountCents,
+		position.TotalAmountCentsInEur,
 		position.Currency,
 		position.Tax,
 		position.FiscalPeriodId,
