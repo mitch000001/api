@@ -186,11 +186,11 @@ func (app *App) FiscalPeriodUpdatePositionHandler(w http.ResponseWriter, req *ht
 		position.Id).Run()
 
 	b, err := json.Marshal(position)
-	// fmt.Println(string(b))
+
 	if err == nil && updateError == nil {
 		io.WriteString(w, string(b))
 	} else {
-		fmt.Printf(`Error updating position: %#v, %#v\n`, err, updateError)
+		fmt.Printf(`Error updating position: %v, %v\n`, err, updateError)
 		w.WriteHeader(http.StatusBadRequest)
 		io.WriteString(w, "{}")
 	}
