@@ -13,7 +13,7 @@ type FiscalPeriod struct {
 	Year      int        `json:"year"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
-	Positions []Position `json:"positions"`
+	Positions []Position `json:"-"`
 }
 
 func (app *App) FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Request) {
