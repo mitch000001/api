@@ -12,6 +12,11 @@ import (
 	"github.com/splicers/jet"
 )
 
+type Link struct {
+	Rel  string `json:"rel"`
+	Href string `json:"href"`
+}
+
 type App struct {
 	Db *jet.Db
 	*gt.Build
