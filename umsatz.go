@@ -40,6 +40,7 @@ func I18nInit() *gt.Build {
 }
 
 var API_PREFIX string
+var routes []Link
 
 func init() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
@@ -62,6 +63,18 @@ func logHandler(next http.Handler) http.HandlerFunc {
 	}
 }
 
+func routingHandler(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "application/vnd.umsatz+json; charset=utf-8")
+
+	bytes, err := json.Marshal(routes)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	io.WriteString(w, string(bytes))
+}
+
 func main() {
 	var port string = os.Getenv("PORT")
 	if port == "" {
@@ -71,6 +84,11 @@ func main() {
 	API_PREFIX = os.Getenv("PREFIX")
 	if API_PREFIX == "" {
 		API_PREFIX = "/api"
+	}
+
+	routes = []Link{
+		NewLink("index.accounts", "/accounts"),
+		NewLink("index.fiscalPeriods", "/fiscalPeriods"),
 	}
 
 	l, err := net.Listen("tcp", "0.0.0.0:"+port)
@@ -88,6 +106,7 @@ func main() {
 	r.Handle("/fiscalPeriods/{year}/positions", logHandler(RequestHandlerWithVars(app.FiscalPeriodCreatePositionHandler))).Methods("POST")
 	r.Handle("/fiscalPeriods/{year}/positions/{id}", logHandler(RequestHandlerWithVars(app.FiscalPeriodDeletePositionHandler))).Methods("DELETE")
 	r.Handle("/fiscalPeriods/{year}/positions/{id}", logHandler(RequestHandlerWithVars(app.FiscalPeriodUpdatePositionHandler))).Methods("PUT")
+	r.Handle("/", logHandler(http.HandlerFunc(routingHandler))).Methods("GET")
 
 	http.Handle("/", r)
 	http.Serve(l, r)
