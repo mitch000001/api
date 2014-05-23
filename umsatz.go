@@ -39,6 +39,8 @@ func I18nInit() *gt.Build {
 	return g
 }
 
+var API_PREFIX string
+
 func init() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 	log.SetPrefix(fmt.Sprintf("pid:%d ", syscall.Getpid()))
@@ -64,6 +66,11 @@ func main() {
 	var port string = os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	API_PREFIX = os.Getenv("PREFIX")
+	if API_PREFIX == "" {
+		API_PREFIX = "/api"
 	}
 
 	l, err := net.Listen("tcp", "0.0.0.0:"+port)

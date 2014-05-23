@@ -22,7 +22,7 @@ type FiscalPeriod struct {
 type fiscalPeriodResponse struct {
 	FiscalPeriod
 	PositionsCount int    `json:"positions_count"`
-	Links          []Link `json:"links"`
+	PositionsUrl   string `json:"positions_url"`
 }
 
 func loadFiscalPeriods(db *jet.Db) ([]fiscalPeriodResponse, error) {
@@ -38,11 +38,7 @@ func loadFiscalPeriods(db *jet.Db) ([]fiscalPeriodResponse, error) {
 	}
 
 	for i, fiscalPeriod := range fiscalPeriods {
-		link := fmt.Sprintf("/fiscalPeriods/%v/positions", fiscalPeriod.Year)
-		links := []Link{
-			Link{"positions", link},
-		}
-		fiscalPeriods[i].Links = links
+		fiscalPeriods[i].PositionsUrl = fmt.Sprintf("%v/fiscalPeriods/%v/positions", API_PREFIX, fiscalPeriod.Year)
 	}
 
 	return fiscalPeriods, nil

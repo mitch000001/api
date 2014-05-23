@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -12,9 +13,15 @@ import (
 	"github.com/splicers/jet"
 )
 
+// Hypermedia link structure
 type Link struct {
 	Rel  string `json:"rel"`
 	Href string `json:"href"`
+}
+
+func NewLink(rel string, href string) Link {
+	absoluteHref := fmt.Sprintf("%v%v", API_PREFIX, href)
+	return Link{rel, absoluteHref}
 }
 
 type App struct {
