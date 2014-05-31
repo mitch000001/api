@@ -3,11 +3,11 @@ package main
 import (
 	_ "database/sql"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -76,10 +76,10 @@ func routingHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	var port string = os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	var (
+		httpAddress = flag.String("http.addr", ":8080", "HTTP listen address")
+	)
+	flag.Parse()
 
 	API_PREFIX = os.Getenv("PREFIX")
 	if API_PREFIX == "" {
@@ -90,12 +90,6 @@ func main() {
 		NewLink("index.accounts", "/accounts"),
 		NewLink("index.fiscalPeriods", "/fiscalPeriods"),
 	}
-
-	l, err := net.Listen("tcp", "0.0.0.0:"+port)
-	if nil != err {
-		log.Fatalln(err)
-	}
-	log.Println("listening on %v", l.Addr())
 
 	r := mux.NewRouter()
 	r.Handle("/accounts", logHandler(http.HandlerFunc(app.AccountIndexHandler))).Methods("GET")
@@ -109,5 +103,6 @@ func main() {
 	r.Handle("/", logHandler(http.HandlerFunc(routingHandler))).Methods("GET")
 
 	http.Handle("/", r)
-	http.Serve(l, r)
+	log.Printf("listening on %s", *httpAddress)
+	log.Fatal(http.ListenAndServe(*httpAddress, http.Handler(r)))
 }
