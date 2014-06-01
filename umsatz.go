@@ -63,6 +63,7 @@ func routingHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/vnd.umsatz+json; charset=utf-8")
 
 	var routes []Link = []Link{
+		NewLink(&req.Header, "index.backups", "/backups"),
 		NewLink(&req.Header, "index.accounts", "/accounts"),
 		NewLink(&req.Header, "index.fiscalPeriods", "/fiscalPeriods"),
 	}
