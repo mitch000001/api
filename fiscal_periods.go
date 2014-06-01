@@ -37,10 +37,6 @@ func loadFiscalPeriods(db *jet.Db) ([]fiscalPeriodResponse, error) {
 		return nil, err
 	}
 
-	for i, fiscalPeriod := range fiscalPeriods {
-		fiscalPeriods[i].PositionsUrl = fmt.Sprintf("%v/fiscalPeriods/%v/positions", API_PREFIX, fiscalPeriod.Year)
-	}
-
 	return fiscalPeriods, nil
 }
 
@@ -53,6 +49,11 @@ func (app *App) FiscalPeriodIndexHandler(w http.ResponseWriter, req *http.Reques
 		log.Println("database error: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
+	}
+
+	baseUri := BaseUri(&req.Header)
+	for i, fiscalPeriod := range fiscalPeriods {
+		fiscalPeriods[i].PositionsUrl = fmt.Sprintf("%v/%d/positions", baseUri, fiscalPeriod.Year)
 	}
 
 	bytes, err := json.Marshal(fiscalPeriods)

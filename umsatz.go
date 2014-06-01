@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"syscall"
 
@@ -39,9 +38,6 @@ func I18nInit() *gt.Build {
 	return g
 }
 
-var API_PREFIX string
-var routes []Link
-
 func init() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 	log.SetPrefix(fmt.Sprintf("pid:%d ", syscall.Getpid()))
@@ -66,6 +62,11 @@ func logHandler(next http.Handler) http.HandlerFunc {
 func routingHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/vnd.umsatz+json; charset=utf-8")
 
+	var routes []Link = []Link{
+		NewLink(&req.Header, "index.accounts", "/accounts"),
+		NewLink(&req.Header, "index.fiscalPeriods", "/fiscalPeriods"),
+	}
+
 	bytes, err := json.Marshal(routes)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -80,16 +81,6 @@ func main() {
 		httpAddress = flag.String("http.addr", ":8080", "HTTP listen address")
 	)
 	flag.Parse()
-
-	API_PREFIX = os.Getenv("PREFIX")
-	if API_PREFIX == "" {
-		API_PREFIX = "/api"
-	}
-
-	routes = []Link{
-		NewLink("index.accounts", "/accounts"),
-		NewLink("index.fiscalPeriods", "/fiscalPeriods"),
-	}
 
 	r := mux.NewRouter()
 	r.Handle("/accounts", logHandler(http.HandlerFunc(app.AccountIndexHandler))).Methods("GET")

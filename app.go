@@ -19,8 +19,16 @@ type Link struct {
 	Href string `json:"href"`
 }
 
-func NewLink(rel string, href string) Link {
-	absoluteHref := fmt.Sprintf("%v%v", API_PREFIX, href)
+func BaseUri(h *http.Header) string {
+	baseUri := h.Get("X-Requested-Uri")
+	if strings.HasSuffix(baseUri, "/") {
+		baseUri = baseUri[:len(baseUri)-1]
+	}
+	return baseUri
+}
+
+func NewLink(h *http.Header, rel string, href string) Link {
+	absoluteHref := fmt.Sprintf("%v%v", BaseUri(h), href)
 	return Link{rel, absoluteHref}
 }
 
